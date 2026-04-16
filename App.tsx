@@ -75,8 +75,8 @@ function App() {
 
   const [fmcgForm, setFmcgForm] = useState<NewFormData>(() => loadFromStorage('sparq_fmcgForm', getInitialFormData()));
   const [industrialForm, setIndustrialForm] = useState<IndustrialFormData>(() => loadFromStorage('sparq_industrialForm', getInitialIndustrialFormData()));
-  const [lifestyleForm, setLifestyleForm] = useState<any>(() => loadFromStorage('sparq_lifestyleForm', {}));
-  const [retailForm, setRetailForm] = useState<any>(() => loadFromStorage('sparq_retailForm', {}));
+  const [lifestyleForm, setLifestyleForm] = useState<LifestyleFormData>(() => loadFromStorage('sparq_lifestyleForm', getInitialLifestyleFormData()));
+  const [retailForm, setRetailForm] = useState<RetailFormData>(() => loadFromStorage('sparq_retailForm', getInitialRetailFormData()));
 
   const [fmcgPackImages, setFmcgPackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_fmcgPackImages', []));
   const [industrialPackImages, setIndustrialPackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_industrialPackImages', []));
