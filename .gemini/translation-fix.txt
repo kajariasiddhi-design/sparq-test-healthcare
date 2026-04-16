@@ -1,0 +1,33 @@
+        try {
+            const prompt = `Translate the following story into ${targetLang}. Maintain the tone, emotion, and cultural nuances.
+      
+      Story: ${JSON.stringify(story)}
+      
+      Output JSON only (Story interface structure). IMPORTANT: Translate ALL fields including the 'story' field (main narrative text). Maintain exact structure of "frames" field with "visual_action" and "audio_dialogue" translated.
+      {
+        "title": "Translated Title",
+        "overview": "Translated Overview",
+        "story": "Translated full narrative story text - THIS IS REQUIRED",
+        "frames": [ 
+           { "frame_no": 1, "beat": "...", "visual_action": "Translated Visuals", "audio_dialogue": "Translated Audio" }
+        ],
+        "ending_moment": "Translated Ending",
+        "tagline": "Translated Tagline"
+      }`;
+
+            const response = await callGeminiFlashLite(prompt, GEMINI_API_KEY);
+            const cleanResponse = response.replace(/```json/g, '').replace(/```/g, '').trim();
+            const translatedStoryPart = JSON.parse(cleanResponse);
+
+            setAdPillars(prev => {
+                const newPillars = [...prev];
+                if (newPillars[pIdx] && newPillars[pIdx].stories) {
+                    newPillars[pIdx].stories![sIdx] = {
+                        ...newPillars[pIdx].stories![sIdx],
+                        ...translatedStoryPart,
+                        isTranslating: false, // Turn off loading
+                    };
+                }
+                return newPillars;
+            });
+        } catch (e) {
