@@ -85,17 +85,38 @@ const PositioningStatement: React.FC<PositioningStatementProps> = ({
     const [isEditingRevised, setIsEditingRevised] = useState(false);
 
     useEffect(() => {
-        if (brandDescriptionResponse?.engine_assessment && typeof brandDescriptionResponse.engine_assessment === 'object' && Object.keys(brandDescriptionResponse.engine_assessment).length > 0) {
-            const initialSuggestions = Object.values(brandDescriptionResponse.engine_assessment).map((text, index) => ({
-                id: index,
-                text,
-                status: 'pending' as const,
-            }));
-            setSuggestions(initialSuggestions);
+        // Find suggestions from engine_assessment or other possible field names
+        const assessment = brandDescriptionResponse?.engine_assessment || 
+                           (brandDescriptionResponse as any)?.image_analysis || 
+                           (brandDescriptionResponse as any)?.suggestions;
+
+        if (assessment) {
+            if (typeof assessment === 'object' && Object.keys(assessment).length > 0) {
+                const initialSuggestions = Object.values(assessment).map((text: any, index: number) => ({
+                    id: index,
+                    text: String(text),
+                    status: 'pending' as const,
+                }));
+                setSuggestions(initialSuggestions);
+            } else if (typeof assessment === 'string' && assessment.trim().length > 0) {
+                // If it's a string, try to split by points/newlines/numbers to create individual suggestions
+                const points = assessment.split(/\d+\.|\*|\n/).map(s => s.trim()).filter(s => s.length > 10);
+                if (points.length > 0) {
+                    setSuggestions(points.map((text, index) => ({
+                        id: index,
+                        text,
+                        status: 'pending' as const,
+                    })));
+                } else {
+                    setSuggestions([{ id: 0, text: assessment, status: 'pending' as const }]);
+                }
+            } else {
+                setSuggestions([]);
+            }
         } else {
             setSuggestions([]);
         }
-    }, [brandDescriptionResponse?.engine_assessment]);
+    }, [brandDescriptionResponse]);
 
     const handleSuggestionStatusChange = (id: number, newStatus: Suggestion['status']) => {
         setSuggestions(currentSuggestions => currentSuggestions.map(s => s.id === id ? { ...s, status: newStatus } : s));
