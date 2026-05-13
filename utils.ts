@@ -105,24 +105,24 @@ export const getInitialIndustrialFormData = (): IndustrialFormData => ({
 
 export const getInitialLifestyleFormData = (): LifestyleFormData => ({
     customerID: "", salesperson: "",
-    brandSpecial: "", brands: "", adBrand: "", productName: "", subCategory: "", subCategoryOther: "",
-    founder: "", foundedYear: "", brandRegions: "", specialLook: "", specialMaterials: "", specialTech: "", specialCollections: "", certifications: "",
+    brandSpecial: "", brands: "", adBrand: "", productName: "", subCategory: [], subCategoryOther: "",
+    founder: "", foundedYear: "", brandRegions: "", specialLook: "", specialMaterials: "", specialTech: "", specialCollections: "", specialOthers: "", certifications: "",
     consumerAge: [], consumerGender: "", consumerIncome: [], consumerGeography: [], consumerProblem: "",
     customerAge: [], customerGender: "", customerLifestyle: [],
     usageOccasions: "", shoppingExperience: "", shoppingCompany: [],
     keyBenefits: "", competitorDifference: "", emotionalOutcome: "", emotionalOutcomeManual: "",
     competitors: "",
     desiredTone: "", desiredWorld: "", desiredAttributes: [], desiredAttributesOther: "", brandAsPerson: "", brandAsPersonOther: "",
-    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, featureStore: "",
+    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, featureStore: "", featureFounderEmployee: "", featureFounderEmployeeBrief: "",
     fullTranscript: ""
 });
 
 export const getInitialRetailFormData = (): RetailFormData => ({
     customerID: "", salesperson: "",
-    brandSpecial: "", storeName: "", primaryCategories: [], storeCountRegions: "",
-    founder: "", foundedYear: "", regions: "", specialRange: "", specialAmbience: "", specialValue: "", specialService: "", recognitions: "",
-    shopperAge: [], shopperGender: "", shopperIncome: [], shopperGeography: [], shopperCoreNeed: "", shopperLifestyle: [], whoDecides: "",
-    shopperJourney: "", shoppingOccasion: [],
+    brandSpecial: "", storeName: "", primaryCategories: [], primaryCategoriesOther: "", storeCountRegions: "",
+    founder: "", foundedYear: "", regions: "", specialRange: "", specialAmbience: "", specialValue: "", specialService: "", specialOthers: "", recognitions: "",
+    shopperAge: [], shopperGender: "", shopperIncome: [], shopperGeography: [], shopperCoreNeed: "", shopperLifestyle: [], shoppingCompany: [], shoppingCompanyOther: "", otherCustomerSegment: "", otherCustomerSegmentBrief: "",
+    shopperJourney: "", shoppingOccasion: [], shoppingOccasionOther: "",
     keyBenefits: "", competitorStandout: "", shopperFeel: "", shopperFeelManual: "",
     competitors: "",
     desiredTone: "", desiredWorld: "", storeAsPerson: "", storeAsPersonOther: "",
@@ -334,7 +334,7 @@ export const transformLifestyleDataForWebhook = (data: LifestyleFormData, lang: 
         "Brand Name": data.brands,
         "adBrand": data.adBrand,
         "Product to Showcase": data.productName,
-        "Product Sub-category": data.subCategory === 'Other' ? data.subCategoryOther : data.subCategory,
+        "Product Sub-category": (() => { const items = data.subCategory.filter(s => s !== 'Others'); if (data.subCategory.includes('Others') && data.subCategoryOther) { items.push(`Others: ${data.subCategoryOther}`); } return items.join(', '); })(),
         "Pack Images": packImages.map(img => ({ fileName: img.fileName, mimeType: img.mimeType, data: img.data.split(',')[1] })),
         "Brand's Special Qualities": data.brandSpecial,
         "Founded": `${data.founder}, ${data.foundedYear}`,
@@ -343,6 +343,7 @@ export const transformLifestyleDataForWebhook = (data: LifestyleFormData, lang: 
         "Materials / Fabric / Finish": data.specialMaterials,
         "Unique Technique / Process": data.specialTech,
         "Exclusive Collections": data.specialCollections,
+        "Special Others": data.specialOthers,
         "Certifications / Validations": data.certifications,
         "Consumer - Age": data.consumerAge.join(', '),
         "Consumer - Gender": data.consumerGender,
@@ -350,22 +351,25 @@ export const transformLifestyleDataForWebhook = (data: LifestyleFormData, lang: 
         "Consumer - Geography": data.consumerGeography.join(', '),
         "Customer - Age": data.customerAge.join(', '),
         "Customer - Gender": data.customerGender,
-        "Lifestyle & Beliefs": data.customerLifestyle.join(', '),
+        "Lifestyle & Beliefs": data.customerLifestyle,
+        "Other Customer Segment": data.otherCustomerSegment === 'Others' ? `Others: ${data.otherCustomerSegmentBrief || ''}` : (data.otherCustomerSegment || ''),
         "Consumer Problem": data.consumerProblem,
         "Consumer Usage Occasions": data.usageOccasions,
         "In-store Shopping Experience": data.shoppingExperience,
-        "Shopping Company": data.shoppingCompany.join(', '),
+        "Shopping Company": (() => { const items = data.shoppingCompany.filter(s => s !== 'Others'); if (data.shoppingCompany.includes('Others') && data.shoppingCompanyOtherBrief) { items.push(`Others: ${data.shoppingCompanyOtherBrief}`); } return items.join(', '); })(),
         "Benefits Offered": data.keyBenefits,
         "Unique Benefits vs Competitors": data.competitorDifference,
-        "Consumer Emotional Outcome": data.emotionalOutcome === 'Other' ? data.emotionalOutcomeManual : data.emotionalOutcome,
+        "Consumer Emotional Outcome": data.emotionalOutcome,
         "Primary Competitors": parseArrayOrCsv(data.competitors),
         "Desired Brand Tone": data.desiredTone,
         "Desired Brand World": data.desiredWorld,
-        "Desired Brand Attributes": data.desiredAttributes.map(a => a === 'Other' ? data.desiredAttributesOther : a).join(', '),
-        "Brand Persona": data.brandAsPerson === 'Other' ? data.brandAsPersonOther : data.brandAsPerson,
+        "Desired Brand Attributes": data.desiredAttributes.map(a => a === 'Other' ? `Other: ${data.desiredAttributesOther || ''}` : a).join(', '),
+        "Brand Persona": data.brandAsPerson === 'Other' ? `Other: ${data.brandAsPersonOther || ''}` : data.brandAsPerson,
         "Ad Objectives": data.adObjectives.map(o => `${o}: ${data.adObjectiveDetails[o] || ''}`),
         "Important Messages": data.adImportantMessages.map(m => `${m}: ${data.adMessageDetails[m] || ''}`),
+        "Feature Founder/Employee": data.featureFounderEmployee === 'Yes' ? (data.featureFounderEmployeeBrief ? `Yes: ${data.featureFounderEmployeeBrief}` : 'Yes') : (data.featureFounderEmployee || ''),
         "Feature Store in Ad": data.featureStore,
+        "Store Link": data.storesListLink || '',
         "Session Transcript": data.fullTranscript,
     };
 };
@@ -378,7 +382,7 @@ export const transformRetailDataForWebhook = (data: RetailFormData, lang: Langua
         "Customer ID": data.customerID,
         "Store Name": data.storeName,
         "Brand Name": data.storeName,
-        "Primary Categories": data.primaryCategories.join(', '),
+        "Primary Categories": data.primaryCategories.map(c => c === 'Others' ? `Others: ${data.primaryCategoriesOther}` : c).join(', '),
         "Store Count and Regions": data.storeCountRegions,
         "Store Images": packImages.map(img => ({ fileName: img.fileName, mimeType: img.mimeType, data: img.data.split(',')[1] })),
         "Pack Images": packImages.map(img => ({ fileName: img.fileName, mimeType: img.mimeType, data: img.data.split(',')[1] })),
@@ -389,26 +393,29 @@ export const transformRetailDataForWebhook = (data: RetailFormData, lang: Langua
         "Store Experience / Ambience": data.specialAmbience,
         "Value / Pricing": data.specialValue,
         "Service / Trust": data.specialService,
+        "Others": data.specialOthers,
         "Recognitions": data.recognitions,
         "Shopper - Age": data.shopperAge.join(', '),
         "Shopper - Gender": data.shopperGender,
         "Shopper - Income": data.shopperIncome.join(', '),
         "Shopper - Geography": data.shopperGeography.join(', '),
         "Shopper Core Need": data.shopperCoreNeed,
-        "Shopper Lifestyle": data.shopperLifestyle.join(', '),
-        "Who Decides": data.whoDecides,
+        "Shopper Lifestyle": data.shopperLifestyle,
+        "Other Customer Segment": data.otherCustomerSegment === 'Others' ? `Others: ${data.otherCustomerSegmentBrief || ''}` : (data.otherCustomerSegment || ''),
+        "Shopping Company": Array.isArray(data.shoppingCompany) ? data.shoppingCompany.map(w => w === 'Others' ? `Others: ${data.shoppingCompanyOther || ''}` : w).join(", ") : "",
         "Shopper Journey": data.shopperJourney,
-        "Shopping Occasion trigger": data.shoppingOccasion.join(', '),
+        "Shopping Occasion trigger": data.shoppingOccasion.map(s => s === 'Others' || s === 'Other' ? `Others: ${data.shoppingOccasionOther || ''}` : s).join(', '),
         "Key Benefits Offered": data.keyBenefits,
         "Competitor Standout Benefits": data.competitorStandout,
-        "Shopper Feel Post Visit": data.shopperFeel === 'Other' || data.shopperFeelManual ? data.shopperFeelManual : data.shopperFeel,
+        "Shopper Feel Post Visit": data.shopperFeel,
         "Primary Competitors": parseArrayOrCsv(data.competitors),
         "Desired Store Tone": data.desiredTone,
         "Desired Brand World": data.desiredWorld,
-        "Store Persona": data.storeAsPerson === 'Other' ? data.storeAsPersonOther : data.storeAsPerson,
+        "Store Persona": data.storeAsPerson === 'Other' ? `Other: ${data.storeAsPersonOther || ''}` : data.storeAsPerson,
         "Ad Objectives": data.adObjectives.map(o => `${o}: ${data.adObjectiveDetails[o] || ''}`),
         "Important Messages": data.adImportantMessages.map(m => `${m}: ${data.adMessageDetails[m] || ''}`),
-        "Ongoing Offer Event": data.ongoingOffer === 'Yes' ? data.offerDetails : 'No',
+        "Ongoing Offer Event": data.ongoingOffer === 'Yes' ? (data.offerDetails ? `Yes: ${data.offerDetails}` : 'Yes') : 'No',
+        "Store Link": data.storesListLink || '',
         "Session Transcript": data.fullTranscript,
     };
 };
@@ -885,7 +892,10 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.brands = data["Brand Name"] || '';
     formData.adBrand = data["adBrand"] || data["Ad Brand"] || '';
     formData.productName = data["Product to Showcase"] || '';
-    formData.subCategory = data["Product Sub-category"] || '';
+    const subCats = parseArrayOrCsv(data["Product Sub-category"]);
+    const subCatOther = subCats.find(s => s.startsWith('Others:'));
+    formData.subCategory = subCatOther ? subCats.map(s => s.startsWith('Others:') ? 'Others' : s) : subCats;
+    formData.subCategoryOther = subCatOther ? subCatOther.replace(/^Others:\s*/, '') : '';
     formData.brandSpecial = data["Brand's Special Qualities"] || '';
     
     const [founder, year] = (data["Founded"] || ',').split(',').map((s: string) => s.trim());
@@ -893,36 +903,55 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.foundedYear = year || '';
     formData.brandRegions = data["Primary Regions"] || '';
     
-    formData.specialLook = data["Design / Craftsmanship"] || '';
-    formData.specialMaterials = data["Materials / Fabric / Finish"] || '';
-    formData.specialTech = data["Unique Technique / Process"] || '';
-    formData.specialCollections = data["Exclusive Collections"] || '';
-    formData.certifications = data["Certifications / Validations"] || '';
+    formData.specialLook = data["Design / Craftsmanship"] || data["Design/Craftsmanship"] || '';
+    formData.specialMaterials = data["Materials / Fabric / Finish"] || data["Materials/Fabric/Finish"] || '';
+    formData.specialTech = data["Unique Technique / Process"] || data["Unique Technique/Process"] || '';
+    formData.specialCollections = data["Exclusive Collections"] || data["Exclusive Collections/Collaborations"] || '';
+    formData.specialOthers = data["Special Others"] || '';
+    formData.certifications = data["Certifications / Validations"] || data["Certifications / External Validation"] || '';
     
     formData.consumerAge = parseArrayOrCsv(data["Consumer - Age"]);
     formData.consumerGender = data["Consumer - Gender"] || '';
     formData.consumerIncome = parseArrayOrCsv(data["Consumer - Income"]);
     formData.consumerGeography = parseArrayOrCsv(data["Consumer - Geography"]);
-    formData.consumerProblem = data["Consumer Problem"] || '';
-    
+    formData.consumerProblem = data["Consumer Problem"] || data["Problem"] || '';
+
     formData.customerAge = parseArrayOrCsv(data["Customer - Age"]);
     formData.customerGender = data["Customer - Gender"] || '';
-    formData.customerLifestyle = parseArrayOrCsv(data["Lifestyle & Beliefs"]);
-    
+    formData.customerLifestyle = parseArrayOrCsv(data["Lifestyle & Beliefs"] || data["Typical Lifestyle/Style Preference"]);
+
+    const ocSeg = data["Other Customer Segment"] || '';
+    if (ocSeg.startsWith('Others:')) {
+        formData.otherCustomerSegment = 'Others';
+        formData.otherCustomerSegmentBrief = ocSeg.replace(/^Others:\s*/, '');
+    } else {
+        formData.otherCustomerSegment = ocSeg;
+    }
+
     formData.usageOccasions = data["Consumer Usage Occasions"] || '';
     formData.shoppingExperience = data["In-store Shopping Experience"] || '';
-    formData.shoppingCompany = parseArrayOrCsv(data["Shopping Company"]);
-    
+    formData.shoppingCompany = parseArrayOrCsv(data["Shopping Company"] || data["Typical Shopping Companions"]);
+
     formData.keyBenefits = data["Benefits Offered"] || '';
     formData.competitorDifference = data["Unique Benefits vs Competitors"] || '';
-    formData.emotionalOutcome = data["Consumer Emotional Outcome"] || '';
+    formData.emotionalOutcome = data["Consumer Emotional Outcome"] || data["Consumer Experience After Use"] || '';
     
     formData.competitors = parseArrayOrCsv(data["Primary Competitors"]).join('\n');
     
     formData.desiredTone = data["Desired Brand Tone"] || '';
     formData.desiredWorld = data["Desired Brand World"] || '';
-    formData.desiredAttributes = parseArrayOrCsv(data["Desired Brand Attributes"]);
-    formData.brandAsPerson = data["Brand Persona"] || '';
+    const rawAttrs = parseArrayOrCsv(data["Desired Brand Attributes"]);
+    const attrOther = rawAttrs.find(a => a.startsWith('Other:'));
+    formData.desiredAttributes = attrOther ? rawAttrs.map(a => a.startsWith('Other:') ? 'Other' : a) : rawAttrs;
+    formData.desiredAttributesOther = attrOther ? attrOther.replace(/^Other:\s*/, '') : '';
+
+    const bapRaw = data["Brand Persona"] || data["Consumer's View of Brand Persona"] || '';
+    if (bapRaw.startsWith('Other:')) {
+        formData.brandAsPerson = 'Other';
+        formData.brandAsPersonOther = bapRaw.replace(/^Other:\s*/, '');
+    } else {
+        formData.brandAsPerson = bapRaw;
+    }
     
     const adObjRaw = parseArrayOrCsv(data["Ad Objectives"]);
     adObjRaw.forEach(item => {
@@ -934,7 +963,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
         }
     });
 
-    const msgRaw = parseArrayOrCsv(data["Important Messages"]);
+    const msgRaw = parseArrayOrCsv(data["Important Messages"] || data["Ad Focus (in order of priority)"]);
     msgRaw.forEach(item => {
         const parts = item.split(':');
         const key = parts[0].trim();
@@ -943,9 +972,19 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
             if (parts.length > 1) formData.adMessageDetails[key] = parts.slice(1).join(':').trim();
         }
     });
-    
+
     formData.featureStore = data["Feature Store in Ad"] || '';
-    formData.fullTranscript = data["Session Transcript"] || '';
+
+    const ffRaw = data["Feature Founder/Employee"] || '';
+    if (ffRaw.startsWith('Yes:')) {
+        formData.featureFounderEmployee = 'Yes';
+        formData.featureFounderEmployeeBrief = ffRaw.replace(/^Yes:\s*/, '');
+    } else {
+        formData.featureFounderEmployee = ffRaw;
+    }
+
+    formData.storesListLink = data["Store Link"] || '';
+    formData.fullTranscript = data["Session Transcript"] || data["Transcript"] || '';
 
     return formData;
 };
@@ -958,41 +997,66 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.salesperson = data["Salesperson"] || '';
     formData.customerID = data["Customer ID"] || '';
     formData.storeName = data["Store Name"] || '';
-    formData.primaryCategories = parseArrayOrCsv(data["Primary Categories"]);
+    const primCats = parseArrayOrCsv(data["Primary Categories"]);
+    const primOther = primCats.find(s => s.startsWith('Others:'));
+    formData.primaryCategories = primOther ? primCats.map(s => s.startsWith('Others:') ? 'Others' : s) : primCats;
+    formData.primaryCategoriesOther = primOther ? primOther.replace(/^Others:\s*/, '') : '';
     formData.storeCountRegions = data["Store Count and Regions"] || '';
-    formData.brandSpecial = data["Store's Special Qualities"] || '';
-    
+    formData.brandSpecial = data["Store's Special Qualities"] || data["Brand's Special Qualities"] || '';
+
     const [founder, year] = (data["Founded"] || ',').split(',').map((s: string) => s.trim());
     formData.founder = founder || '';
     formData.foundedYear = year || '';
     formData.regions = data["Primary Regions"] || '';
-    
-    formData.specialRange = data["Range / Variety"] || '';
-    formData.specialAmbience = data["Store Experience / Ambience"] || '';
-    formData.specialValue = data["Value / Pricing"] || '';
-    formData.specialService = data["Service / Trust"] || '';
+
+    formData.specialRange = data["Range / Variety"] || data["Range/Variety"] || '';
+    formData.specialAmbience = data["Store Experience / Ambience"] || data["Store Experience/Ambience"] || '';
+    formData.specialValue = data["Value / Pricing"] || data["Value/Pricing"] || '';
+    formData.specialService = data["Service / Trust"] || data["Service/Trust"] || '';
+    formData.specialOthers = data["Others"] || data["specialOthers"] || '';
     formData.recognitions = data["Recognitions"] || '';
     
     formData.shopperAge = parseArrayOrCsv(data["Shopper - Age"]);
     formData.shopperGender = data["Shopper - Gender"] || '';
     formData.shopperIncome = parseArrayOrCsv(data["Shopper - Income"]);
     formData.shopperGeography = parseArrayOrCsv(data["Shopper - Geography"]);
-    formData.shopperCoreNeed = data["Shopper Core Need"] || '';
+    formData.shopperCoreNeed = data["Shopper Core Need"] || data["Problem"] || '';
     formData.shopperLifestyle = parseArrayOrCsv(data["Shopper Lifestyle"]);
-    formData.whoDecides = data["Who Decides"] || '';
+
+    const ocSegR = data["Other Customer Segment"] || '';
+    if (ocSegR.startsWith('Others:')) {
+        formData.otherCustomerSegment = 'Others';
+        formData.otherCustomerSegmentBrief = ocSegR.replace(/^Others:\s*/, '');
+    } else {
+        formData.otherCustomerSegment = ocSegR;
+    }
+
+    const rawCompany = parseArrayOrCsv(data["Shopping Company"] || data["Typical Shopper/Decision Maker"]);
+    const companyOther = rawCompany.find(s => s.startsWith('Others:'));
+    formData.shoppingCompany = companyOther ? rawCompany.map(s => s.startsWith('Others:') ? 'Others' : s) : rawCompany;
+    formData.shoppingCompanyOther = companyOther ? companyOther.replace(/^Others:\s*/, '') : '';
     
     formData.shopperJourney = data["Shopper Journey"] || '';
-    formData.shoppingOccasion = parseArrayOrCsv(data["Shopping Occasion trigger"]);
+    const rawOccasion = parseArrayOrCsv(data["Shopping Occasion trigger"] || data["Shopping Occasion"]);
+    const occasionOther = rawOccasion.find(s => s.startsWith('Others:'));
+    formData.shoppingOccasion = occasionOther ? rawOccasion.map(s => s.startsWith('Others:') ? 'Others' : s) : rawOccasion;
+    formData.shoppingOccasionOther = occasionOther ? occasionOther.replace(/^Others:\s*/, '') : '';
     
-    formData.keyBenefits = data["Key Benefits Offered"] || '';
-    formData.competitorStandout = data["Competitor Standout Benefits"] || '';
-    formData.shopperFeel = data["Shopper Feel Post Visit"] || '';
+    formData.keyBenefits = data["Key Benefits Offered"] || data["Benefits Offered"] || '';
+    formData.competitorStandout = data["Competitor Standout Benefits"] || data["Unique Benefits vs Competitors"] || '';
+    formData.shopperFeel = data["Shopper Feel Post Visit"] || data["Consumer Experience After Shopping"] || '';
     
     formData.competitors = parseArrayOrCsv(data["Primary Competitors"]).join('\n');
     
-    formData.desiredTone = data["Desired Store Tone"] || '';
+    formData.desiredTone = data["Desired Store Tone"] || data["Desired Brand Tone"] || '';
     formData.desiredWorld = data["Desired Brand World"] || '';
-    formData.storeAsPerson = data["Store Persona"] || '';
+    const sapRaw = data["Store Persona"] || data["Consumer's View of Brand Persona"] || '';
+    if (sapRaw.startsWith('Other:')) {
+        formData.storeAsPerson = 'Other';
+        formData.storeAsPersonOther = sapRaw.replace(/^Other:\s*/, '');
+    } else {
+        formData.storeAsPerson = sapRaw;
+    }
     
     const adObjRaw = parseArrayOrCsv(data["Ad Objectives"]);
     adObjRaw.forEach(item => {
@@ -1004,8 +1068,8 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
         }
     });
 
-    const msgRaw = parseArrayOrCsv(data["Important Messages"]);
-    msgRaw.forEach(item => {
+    const msgRawR = parseArrayOrCsv(data["Important Messages"] || data["Ad Focus (in order of priority)"]);
+    msgRawR.forEach(item => {
         const parts = item.split(':');
         const key = parts[0].trim();
         if (key) {
@@ -1013,10 +1077,12 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
             if (parts.length > 1) formData.adMessageDetails[key] = parts.slice(1).join(':').trim();
         }
     });
-    
-    formData.ongoingOffer = data["Ongoing Offer Event"] === 'No' ? 'No' : 'Yes';
-    formData.offerDetails = data["Ongoing Offer Event"] !== 'No' ? data["Ongoing Offer Event"] : '';
-    formData.fullTranscript = data["Session Transcript"] || '';
+
+    const ongoingOfferRaw = data["Ongoing Offer Event"] || data["Ongoing Offer/Event"] || '';
+    formData.ongoingOffer = ongoingOfferRaw === 'No' || !ongoingOfferRaw ? 'No' : 'Yes';
+    formData.offerDetails = ongoingOfferRaw && ongoingOfferRaw !== 'No' ? ongoingOfferRaw.replace(/^Yes:\s*/, '') : '';
+    formData.storesListLink = data["Store Link"] || '';
+    formData.fullTranscript = data["Session Transcript"] || data["Transcript"] || '';
 
     return formData;
 };

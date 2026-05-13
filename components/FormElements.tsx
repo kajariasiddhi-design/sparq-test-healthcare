@@ -5,8 +5,9 @@ import React from 'react';
 import { MultilingualText, Language } from '../types';
 import { formTranslations } from '../data/translations';
 
-export const TranslatedText: React.FC<{ lang: string, text: MultilingualText, className?: string }> = ({ lang, text, className = '' }) => {
+export const TranslatedText: React.FC<{ lang: string, text: MultilingualText | string, className?: string }> = ({ lang, text, className = '' }) => {
   if (!text) return null;
+  if (typeof text === 'string') return <span className={className}>{text}</span>;
   const displayText = text[lang] || text.en;
   const subDisplayText = (lang !== 'en' && text.en && text.en !== displayText) ? text.en : null;
 
@@ -109,7 +110,7 @@ export const Chip: React.FC<{ active: boolean, onClick: () => void, children: Re
   </button>
 );
 
-export const MultiChips: React.FC<{ options: Record<string, MultilingualText>, value: string[], onChange: (v: string[]) => void, lang: Language, maxSelections?: number }> = ({ options, value = [], onChange, lang, maxSelections = 99 }) => {
+export const MultiChips: React.FC<{ options: Record<string, MultilingualText> | string[], value: string[], onChange: (v: string[]) => void, lang: Language, maxSelections?: number }> = ({ options, value = [], onChange, lang, maxSelections = 99 }) => {
   const toggle = (opt: string) => {
     const currentValue = value || [];
     if (currentValue.includes(opt)) {
@@ -126,7 +127,7 @@ export const MultiChips: React.FC<{ options: Record<string, MultilingualText>, v
   };
   return (
     <div className="mt-3 flex flex-wrap gap-3">
-      {Object.entries(options).map(([key, text]) => (
+      {(Array.isArray(options) ? options.map(opt => [opt, opt]) : Object.entries(options)).map(([key, text]) => (
         <Chip key={key} active={(value || []).includes(key)} onClick={() => toggle(key)}>
           <TranslatedText lang={lang} text={text} />
         </Chip>
@@ -135,9 +136,9 @@ export const MultiChips: React.FC<{ options: Record<string, MultilingualText>, v
   );
 };
 
-export const SingleChips: React.FC<{ options: Record<string, MultilingualText>, value: string, onChange: (v: string) => void, lang: Language }> = ({ options, value, onChange, lang }) => (
+export const SingleChips: React.FC<{ options: Record<string, MultilingualText> | string[], value: string, onChange: (v: string) => void, lang: Language }> = ({ options, value, onChange, lang }) => (
   <div className="mt-3 flex flex-wrap gap-3">
-    {Object.entries(options).map(([key, text]) => (
+    {(Array.isArray(options) ? options.map(opt => [opt, opt]) : Object.entries(options)).map(([key, text]) => (
       <Chip key={key} active={value === key} onClick={() => onChange(value === key ? "" : key)}>
         <TranslatedText lang={lang} text={text} />
       </Chip>

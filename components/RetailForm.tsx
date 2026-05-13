@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { RetailFormData, UploadedImage, RetailFormSuggestions, Language, TranscribedClip } from '../types';
 import { retailFormTranslations } from '../data/retailTranslations';
 import { formTranslations, translations } from '../data/translations';
 import ImageUploader from './ImageUploader.tsx';
 import AudioTranscriptionManager from './AudioTranscriptionManager.tsx';
 import { Section, Label, TextInput, TextArea, MultiChips, SingleChips, SuggestedInput, TranslatedText } from './FormElements.tsx';
+import { psychographicImageMap } from '../data/lifestyleRetailPsychographics';
 
 interface RetailFormProps {
     form: RetailFormData;
@@ -60,6 +61,35 @@ const RetailForm: React.FC<RetailFormProps> = ({
         "Aspirational Shopper",
         "Planned Bulk Buyer"
     ];
+
+
+    const activeCategories = useMemo(() => {
+        const categories: string[] = [];
+        
+        const hasDemographics = (form.shopperAge && form.shopperAge.length > 0) || 
+                               form.shopperGender ||
+                               form.otherCustomerSegment === 'Kids';
+
+        if (!hasDemographics) return [];
+
+        if (form.otherCustomerSegment === 'Kids') {
+            categories.push('kids');
+        }
+        
+        const ages = [...(form.shopperAge || [])];
+        const gender = form.shopperGender;
+        const isMen = gender === 'Men' || gender === 'Men and Women';
+        const isWomen = gender === 'Women' || gender === 'Men and Women';
+        
+        if (isWomen && ages.includes('15-21')) categories.push('young_girls');
+        if (isMen && ages.includes('15-21')) categories.push('young_boys');
+        if (isWomen && ages.includes('22-30')) categories.push('young_women');
+        if (isMen && ages.includes('22-30')) categories.push('young_men');
+        if (isWomen && (ages.includes('31-50') || ages.includes('50+'))) categories.push('women');
+        if (isMen && (ages.includes('31-50') || ages.includes('50+'))) categories.push('men');
+        
+        return Array.from(new Set(categories));
+    }, [form.otherCustomerSegment, form.shopperAge, form.shopperGender]);
 
     return (
         <form onSubmit={onSubmit} className="space-y-6 pb-24">
@@ -134,6 +164,17 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             value={form.primaryCategories}
                             onChange={(val) => update('primaryCategories', val)}
                         />
+                        {form.primaryCategories.includes("Others") && (
+                            <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <TextInput
+                                    lang={lang}
+                                    value={form.primaryCategoriesOther || ''}
+                                    onChange={(val) => update('primaryCategoriesOther', val)}
+                                    placeholder={section1.q1_3.placeholder_other}
+                                    required
+                                />
+                            </div>
+                        )}
                     </SuggestedInput>
 
                     <SuggestedInput lang={lang} suggestion={suggestions.storeCountRegions} onAccept={(val) => update('storeCountRegions', val)}>
@@ -186,23 +227,33 @@ const RetailForm: React.FC<RetailFormProps> = ({
                         <div>
                             <Label qIndex="2.2" lang={lang} text={section2.q2_2.text} className="mb-3" />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {Object.entries(section2.q2_2.options).map(([key, labelText]) => (
-                                    <div key={key}>
-                                        <Label lang={lang} text={labelText} className="mb-1 font-medium text-sm text-neutral-700" />
-                                        <SuggestedInput
-                                            lang={lang}
-                                            suggestion={(suggestions as any)[`special${key.split(' ')[0]}`]}
-                                            onAccept={(val) => update(`special${key.split(' ')[0]}`, val)}
-                                        >
-                                            <TextInput
+                                {Object.entries(section2.q2_2.options).map(([key, labelText]) => {
+                                    const fieldMap: { [key: string]: keyof RetailFormData } = {
+                                        "Range / Variety": "specialRange",
+                                        "Store Experience / Ambience": "specialAmbience",
+                                        "Value / Pricing": "specialValue",
+                                        "Service / Trust": "specialService",
+                                        "Others": "specialOthers"
+                                    };
+                                    const field = fieldMap[key];
+                                    return (
+                                        <div key={key}>
+                                            <Label lang={lang} text={labelText} className="mb-1 font-medium text-sm text-neutral-700" />
+                                            <SuggestedInput
                                                 lang={lang}
-                                                value={(form as any)[`special${key.split(' ')[0]}`] || ''}
-                                                onChange={(val) => update(`special${key.split(' ')[0]}`, val)}
-                                                placeholder={section2.q2_2.placeholders[key as keyof typeof section2.q2_2.placeholders]}
-                                            />
-                                        </SuggestedInput>
-                                    </div>
-                                ))}
+                                                suggestion={(suggestions as any)[field]}
+                                                onAccept={(val) => update(field, val)}
+                                            >
+                                                <TextInput
+                                                    lang={lang}
+                                                    value={(form as any)[field] || ''}
+                                                    onChange={(val) => update(field, val)}
+                                                    placeholder={section2.q2_2.placeholders[key as keyof typeof section2.q2_2.placeholders]}
+                                                />
+                                            </SuggestedInput>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -240,7 +291,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.age} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.consumerAgeOptions}
+                                        options={section3.consumerAgeOptions}
                                         value={form.shopperAge}
                                         onChange={(val) => update('shopperAge', val)}
                                     />
@@ -249,7 +300,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.gender} className="text-[15px]" />
                                     <SingleChips
                                         lang={lang}
-                                        options={formTranslations.section3.genderOptions}
+                                        options={section3.genderOptions}
                                         value={form.shopperGender}
                                         onChange={(val) => update('shopperGender', val)}
                                     />
@@ -258,20 +309,41 @@ const RetailForm: React.FC<RetailFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.income} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.incomeOptions}
+                                        options={section3.incomeOptions}
                                         value={form.shopperIncome}
                                         onChange={(val) => update('shopperIncome', val)}
                                     />
                                 </SuggestedInput>
-                                <SuggestedInput lang={lang} suggestion={suggestions.shopperGeography} onAccept={(val) => update('shopperGeography', val)}>
+                                                                <SuggestedInput lang={lang} suggestion={suggestions.shopperGeography} onAccept={(val) => update('shopperGeography', val)}>
                                     <Label lang={lang} text={section3.q3A.geography} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.geoOptions}
+                                        options={section3.geoOptions}
                                         value={form.shopperGeography}
                                         onChange={(val) => update('shopperGeography', val)}
                                     />
                                 </SuggestedInput>
+
+                                <div className="mt-6">
+                                    <Label lang={lang} text={section3.q3B.text} className="text-[15px]" />
+                                    <SingleChips
+                                        lang={lang}
+                                        options={section3.q3B.options}
+                                        value={form.otherCustomerSegment || ''}
+                                        onChange={(val) => update('otherCustomerSegment', val)}
+                                    />
+                                    {form.otherCustomerSegment === 'Others' && (
+                                        <div className="mt-3">
+                                            <TextInput
+                                                lang={lang}
+                                                value={form.otherCustomerSegmentBrief || ''}
+                                                onChange={(val) => update('otherCustomerSegmentBrief', val)}
+                                                placeholder={section3.q3B.placeholder}
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -287,60 +359,102 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </SuggestedInput>
                         </div>
 
-                        <div className="p-4 border border-neutral-200 rounded-xl bg-white shadow-sm">
-                            <SuggestedInput lang={lang} suggestion={suggestions.shopperLifestyle} onAccept={(val) => update('shopperLifestyle', val)}>
-                                <Label qIndex="3.3" lang={lang} text={section3.q3_3.text} className="mb-4 block" />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    {lifestyleOptions.map(opt => {
-                                        const isSelected = (form.shopperLifestyle || []).includes(opt);
-                                        const limitReached = (form.shopperLifestyle || []).length >= 2;
-                                        const isDisabled = !isSelected && limitReached;
+                                                <div className="p-4 border border-neutral-200 rounded-xl bg-white shadow-sm">
+                                <SuggestedInput lang={lang} suggestion={suggestions.shopperLifestyle} onAccept={(val) => update('shopperLifestyle', val)}>
+                                    <Label qIndex="3.3" lang={lang} text={section3.q3_3.text} className="mb-4 block" />
+                                    <div className="space-y-6">
+                                        {activeCategories.length > 0 ? (
+                                        activeCategories.map((cat) => {
+                                            return (
+                                                <div key={cat} className="p-4 border border-neutral-100 rounded-xl bg-slate-50 shadow-sm">
+                                                    <h4 className="font-semibold text-indigo-900 mb-4 pb-2 border-b border-indigo-100 flex items-center justify-between">
+                                                        <span>{section3.q3_3.categories[cat] ? (section3.q3_3.categories[cat][lang] || section3.q3_3.categories[cat].en) : cat}</span>
+                                                        <span className="text-xs font-normal text-indigo-400">Select up to 3</span>
+                                                    </h4>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                        {section3.q3_3.options[cat] && section3.q3_3.options[cat].map((opt: string) => {
+                                                            const isSelected = form.shopperLifestyle.includes(opt);
+                                                            const selectedInCategory = form.shopperLifestyle.filter(v => section3.q3_3.options[cat].includes(v)).length;
+                                                            const limitReached = selectedInCategory >= 3;
+                                                            const isDisabled = !isSelected && limitReached;
+                                                            
+                                                            const titlePart = opt.includes('(') ? opt.split('(')[0].trim() : opt;
+                                                            const descPart = opt.includes('(') ? opt.split('(')[1].replace(')', '').trim() : '';
+                                                            const capitalizedDesc = descPart ? descPart.charAt(0).toUpperCase() + descPart.slice(1) : '';
 
-                                        const translatedOpt = section3.q3_3.options[opt as keyof typeof section3.q3_3.options];
-                                        const fullText = translatedOpt ? (translatedOpt[lang] || translatedOpt.en) : opt;
-                                        const labelMain = fullText.split('(')[0].trim();
-                                        const labelSubRaw = fullText.split('(')[1]?.replace(')', '').trim() || '';
-                                        const labelSub = labelSubRaw ? labelSubRaw.charAt(0).toUpperCase() + labelSubRaw.slice(1) : '';
-                                        
-                                        return (
-                                            <div 
-                                                key={opt}
-                                                onClick={() => {
-                                                    if (isSelected) update('shopperLifestyle', form.shopperLifestyle.filter(v => v !== opt));
-                                                    else if (!limitReached) update('shopperLifestyle', [...form.shopperLifestyle, opt]);
-                                                }}
-                                                className={`flex flex-col rounded-xl border-2 transition-all cursor-pointer overflow-hidden bg-white shadow-sm h-full ${
-                                                    isSelected 
-                                                        ? 'border-blue-600 ring-1 ring-blue-600 scale-[1.02]' 
-                                                        : isDisabled 
-                                                            ? 'border-neutral-200 opacity-40 grayscale-[0.5]' 
-                                                            : 'border-neutral-100 hover:border-blue-300'
-                                                }`}
-                                            >
-                                                <div className="aspect-video w-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs text-center p-4">
-                                                    image preview<br/>{labelMain}
+                                                            return (
+                                                                <button
+                                                                    key={opt}
+                                                                    type="button"
+                                                                    disabled={isDisabled}
+                                                                    onClick={() => {
+                                                                        if (isSelected) {
+                                                                            update('shopperLifestyle', form.shopperLifestyle.filter(v => v !== opt));
+                                                                        } else if (!limitReached) {
+                                                                            update('shopperLifestyle', [...form.shopperLifestyle, opt]);
+                                                                        }
+                                                                    }}
+                                                                    className={`flex flex-col text-left overflow-hidden rounded-xl border-2 transition-all ${
+                                                                        isSelected 
+                                                                            ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600 shadow-sm' 
+                                                                            : isDisabled 
+                                                                                ? 'border-neutral-100 opacity-50 cursor-not-allowed bg-neutral-50' 
+                                                                                : 'border-white bg-white shadow-sm hover:border-indigo-200 hover:shadow-md'
+                                                                    }`}
+                                                                >
+                                                                    <div className="aspect-[4/3] w-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400 overflow-hidden">
+                                                                        {psychographicImageMap[opt] ? (
+                                                                            <img src={psychographicImageMap[opt]} alt={titlePart} className="w-full h-full object-contain" />
+                                                                        ) : (
+                                                                            <div className="p-2 border border-slate-200 rounded text-[9px] uppercase tracking-tighter">IMAGE PREVIEW</div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="p-3">
+                                                                    <div className={`font-bold text-[13px] leading-tight mb-1 ${isSelected ? 'text-indigo-900' : 'text-neutral-800'}`}>
+                                                                        {titlePart}
+                                                                    </div>
+                                                                    {capitalizedDesc && (
+                                                                        <div className={`text-[11px] leading-tight ${isSelected ? 'text-indigo-700 font-medium' : 'text-neutral-500'}`}>
+                                                                            {capitalizedDesc}
+                                                                        </div>
+                                                                    )}
+                                                                    </div>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
-                                                <div className="p-3">
-                                                    <div className="font-bold text-[13px] text-neutral-900 leading-tight">{labelMain}</div>
-                                                    <div className="text-[11px] text-neutral-500 leading-tight mt-1">{labelSub}</div>
-                                                </div>
+                                            );
+                                        })
+                                        ) : (
+                                            <div className="p-8 border-2 border-dashed border-neutral-200 rounded-2xl flex flex-col items-center justify-center text-neutral-400 bg-neutral-50">
+                                                <p className="text-sm font-medium">Please select Primary Shopper Age and Gender first</p>
+                                                <p className="text-xs mt-1">Options will appear based on your selection</p>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            </SuggestedInput>
-                        </div>
-
-                        <SuggestedInput lang={lang} suggestion={suggestions.whoDecides} onAccept={(val) => update('whoDecides', val)}>
-                            <Label qIndex="3.4" lang={lang} text={section3.q3_4.text} />
-                            <div className="mt-3">
-                                <SingleChips
-                                    lang={lang}
-                                    options={section3.q3_4.options}
-                                    value={form.whoDecides}
-                                    onChange={(val) => update('whoDecides', val)}
-                                />
+                                        )}
+                                    </div>
+                                </SuggestedInput>
                             </div>
+
+                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingCompany} onAccept={(val) => update('shoppingCompany', val)}>
+                            <Label qIndex="3.4" lang={lang} text={section3.q3_4.text} />
+                            <MultiChips
+                                lang={lang}
+                                options={section3.q3_4.options}
+                                value={form.shoppingCompany || []}
+                                onChange={(val) => update('shoppingCompany', val)}
+                            />
+                            {form.shoppingCompany?.includes('Others') && (
+                                <div className="mt-3">
+                                    <TextInput
+                                        lang={lang}
+                                        value={form.shoppingCompanyOther || ''}
+                                        onChange={(val) => update('shoppingCompanyOther', val)}
+                                        placeholder={retailFormTranslations.describeBriefly || 'Describe briefly'}
+                                        required
+                                    />
+                                </div>
+                            )}
                         </SuggestedInput>
                     </div>
                 </Section>
@@ -359,24 +473,38 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             />
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingOccasion} onAccept={(val) => update('shoppingOccasion', val)}>
+                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingOccasion} onAccept={(val) => update('shoppingOccasion', val)}>
                             <Label qIndex="4.2" lang={lang} text={section4.q4_2.text} />
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {section4.q4_2.options.map(opt => {
-                                    const active = form.shoppingOccasion.includes(opt);
-                                    return (
-                                        <button
-                                            key={opt} type="button"
-                                            onClick={() => {
-                                                if (active) update('shoppingOccasion', form.shoppingOccasion.filter(v => v !== opt));
-                                                else if (form.shoppingOccasion.length < 2) update('shoppingOccasion', [...form.shoppingOccasion, opt]);
-                                            }}
-                                            className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? 'bg-neutral-900 text-white shadow-sm border-neutral-900' : 'bg-neutral-100 text-neutral-800 border-neutral-200 hover:border-neutral-300'}`}
-                                        >
-                                            {opt}
-                                        </button>
-                                    )
-                                })}
+                            <div className="mt-3">
+                                <div className="flex flex-wrap gap-2">
+                                    {section4.q4_2.options.map(opt => {
+                                        const active = form.shoppingOccasion.includes(opt);
+                                        return (
+                                            <button
+                                                key={opt} type="button"
+                                                onClick={() => {
+                                                    if (active) update('shoppingOccasion', form.shoppingOccasion.filter(v => v !== opt));
+                                                    else if (form.shoppingOccasion.length < 2) update('shoppingOccasion', [...form.shoppingOccasion, opt]);
+                                                    else update('shoppingOccasion', [...form.shoppingOccasion.slice(1), opt]);
+                                                }}
+                                                className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? 'bg-neutral-900 text-white shadow-sm border-neutral-900' : 'bg-neutral-100 text-neutral-800 border-neutral-200 hover:border-neutral-300'}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                                {form.shoppingOccasion.includes('Other') && (
+                                    <div className="mt-3">
+                                        <TextInput
+                                            lang={lang}
+                                            value={form.shoppingOccasionOther || ''}
+                                            onChange={(val) => update('shoppingOccasionOther', val)}
+                                            placeholder={section4.q4_2.placeholder}
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </SuggestedInput>
                     </div>
@@ -506,22 +634,26 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </div>
                         </div>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.desiredPerson} onAccept={(val) => update('desiredPerson', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.desiredPerson} onAccept={(val) => update('storeAsPerson', val)}>
                             <Label qIndex="7.2" lang={lang} text={section7.q7_2.text} />
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {section7.q7_2.options.filter(o => o !== 'Other').map(opt => (
-                                    <button
-                                        key={opt} type="button"
-                                        onClick={() => update('desiredPerson', form.desiredPerson === opt ? "" : opt)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                                            form.desiredPerson === opt 
-                                                ? 'bg-neutral-900 text-white shadow-sm border-neutral-900' 
-                                                : 'bg-neutral-100 text-neutral-800 border-neutral-200 hover:border-neutral-300'
-                                        }`}
-                                    >
-                                        {opt}
-                                    </button>
-                                ))}
+                            <div className="mt-3">
+                                <SingleChips
+                                    lang={lang}
+                                    options={section7.q7_2.options}
+                                    value={form.storeAsPerson}
+                                    onChange={(val) => update('storeAsPerson', val)}
+                                />
+                                {form.storeAsPerson === 'Other' && (
+                                    <div className="mt-3">
+                                        <TextInput
+                                            lang={lang}
+                                            value={form.storeAsPersonOther || ''}
+                                            onChange={(val) => update('storeAsPersonOther', val)}
+                                            placeholder={section7.q7_2.placeholder}
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </SuggestedInput>
 
@@ -640,7 +772,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             {form.salesperson || <span className="text-slate-400">Selected from start screen</span>}
                         </div>
                     </div>
-                    <div>
+                                        <div>
                         <Label lang={lang} text={section8.customerID} className="mb-2" />
                         <TextInput
                             lang={lang}
@@ -649,6 +781,23 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             placeholder={section8.customerID}
                         />
                     </div>
+
+                    <div>
+                        <Label lang={lang} text={{
+                            en: "If the brand has a list of stores, please include the link of the stores list here",
+                            hi: "यदि ब्रांड के पास स्टोर की सूची है, तो कृपया यहां स्टोर सूची का लिंक शामिल करें",
+                            ta: "பிராண்டில் கடைகளின் பட்டியல் இருந்தால், தயவுசெய்து கடைகளின் பட்டியலின் இணைப்பை இங்கே சேர்க்கவும்",
+                            te: "బ్రాండ్‌లో స్టోర్‌ల జాబితా ఉంటే, దయచేసి స్టోర్‌ల జాబితా లింక్‌ను ఇక్కడ చేర్చండి",
+                            gu: "જો બ્રાન્ડ પાસે સ્ટોર્સની સૂચિ હોય, તો કૃપા કરીને અહીં સ્ટોર્સની સૂચિની લિંક શામેલ કરો"
+                        }} />
+                        <TextInput
+                            lang={lang}
+                            value={form.storesListLink || ""}
+                            onChange={(val) => update("storesListLink", val)}
+                            placeholder="Paste link of store list here"
+                        />
+                    </div>
+                    
                     
                     <div className="pt-4">
                         <Label lang={lang} text={section8.images} className="mb-4" />

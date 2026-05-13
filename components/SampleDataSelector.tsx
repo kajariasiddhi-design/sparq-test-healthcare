@@ -51,7 +51,7 @@ const SampleDataSelector: React.FC<SampleDataSelectorProps> = ({ sampleProfiles,
               disabled={!isCorrectCategory}
               className={!isCorrectCategory ? "text-slate-400" : ""}
             >
-              {getCategoryLabel(profile.category)} - {profile.name[lang] || profile.name.en}
+              {getCategoryLabel(profile.category)} - {profile.name.en}
             </option>
           );
         })}

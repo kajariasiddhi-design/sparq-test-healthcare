@@ -293,7 +293,7 @@ export interface LifestyleFormData {
   brands: string;
   adBrand: string;
   productName: string;
-  subCategory: string;
+  subCategory: string[];
   subCategoryOther?: string;
 
   // Section 2: Origin & Heritage
@@ -304,6 +304,7 @@ export interface LifestyleFormData {
   specialMaterials: string;
   specialTech: string;
   specialCollections: string;
+  specialOthers?: string;
   certifications: string;
 
   // Section 3: Target Audience
@@ -316,11 +317,14 @@ export interface LifestyleFormData {
   customerAge: string[];
   customerGender: string;
   customerLifestyle: string[];
+  otherCustomerSegment?: 'No other segments' | 'Kids' | 'Others' | '';
+  otherCustomerSegmentBrief?: string;
 
   // Section 4: Brand Usage
   usageOccasions: string;
   shoppingExperience: string;
   shoppingCompany: string[];
+  shoppingCompanyOtherBrief?: string;
 
   // Section 5: Benefit & Experience
   keyBenefits: string;
@@ -343,6 +347,10 @@ export interface LifestyleFormData {
   adImportantMessages: string[];
   adMessageDetails: { [key: string]: string };
   featureStore: 'Yes' | 'No' | '';
+  featureFounderEmployee: 'Yes' | 'No' | '';
+  featureFounderEmployeeBrief?: string;
+
+  storesListLink?: string;
 
   fullTranscript: string;
 }
@@ -355,6 +363,7 @@ export interface RetailFormData {
   brandSpecial: string;
   storeName: string;
   primaryCategories: string[];
+  primaryCategoriesOther?: string;
   storeCountRegions: string;
 
   // Section 2: Origin & Heritage
@@ -365,6 +374,7 @@ export interface RetailFormData {
   specialAmbience: string;
   specialValue: string;
   specialService: string;
+  specialOthers?: string;
   recognitions: string;
 
   // Section 3: Target Audience
@@ -374,11 +384,15 @@ export interface RetailFormData {
   shopperGeography: string[];
   shopperCoreNeed: string;
   shopperLifestyle: string[];
-  whoDecides: string;
+  shoppingCompany: string[];
+  shoppingCompanyOther?: string;
+  otherCustomerSegment?: 'No other segments' | 'Kids' | 'Others' | '';
+  otherCustomerSegmentBrief?: string;
 
   // Section 4: Shopping Experience
   shopperJourney: string;
   shoppingOccasion: string[];
+  shoppingOccasionOther?: string;
   
   // Section 5: Benefit & Experience
   keyBenefits: string;
@@ -401,6 +415,7 @@ export interface RetailFormData {
   ongoingOffer: 'Yes' | 'No' | '';
   offerDetails?: string;
 
+  storesListLink?: string;
   fullTranscript: string;
 }
 

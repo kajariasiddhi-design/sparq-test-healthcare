@@ -165,11 +165,10 @@ Output JSON only (no markdown):
                 setWorlds(worldsWithIds);
 
                 // Auto-trigger world analysis after generation
-                // Use setTimeout to ensure worlds state is set before analyzing
                 setIsGeneratingWorlds(false); // Mark generation as complete before analysis starts
                 setTimeout(() => {
                     recommendWorldsInternal(worldsWithIds);
-                }, 100);
+                }, 800);
                 return; // Early return since we handle setIsGeneratingWorlds above
             } else {
                 console.warn("No worlds found in webhook response", responseData);

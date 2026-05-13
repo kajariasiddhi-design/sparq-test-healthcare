@@ -5,6 +5,7 @@ import { formTranslations, translations } from '../data/translations';
 import ImageUploader from './ImageUploader.tsx';
 import AudioTranscriptionManager from './AudioTranscriptionManager.tsx';
 import { Section, Label, TextInput, TextArea, MultiChips, SingleChips, SuggestedInput, TranslatedText } from './FormElements.tsx';
+import { psychographicImageMap } from '../data/lifestyleRetailPsychographics';
 
 interface LifestyleFormProps {
     form: LifestyleFormData;
@@ -52,31 +53,48 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
 
     const { section1, section2, section3, section4, section5, section6, section7, section8 } = lifestyleFormTranslations;
 
-    const activeCategories = useMemo(() => {
-        const categories: Array<keyof typeof section3.q3_3.categories> = [];
-        const isYouth = (form.customerAge || []).includes('15-25');
-        const isOlder = (form.customerAge || []).some(a => ['26-35', '36-50', '50+'].includes(a));
+        const activeCategories = useMemo(() => {
+        const categories: string[] = [];
         
-        const isMen = form.customerGender === 'Men' || form.customerGender === 'Men and Women';
-        const isWomen = form.customerGender === 'Women' || form.customerGender === 'Men and Women';
+        const hasDemographics = (form.customerAge && form.customerAge.length > 0) || 
+                               (form.consumerAge && form.consumerAge.length > 0) || 
+                               form.customerGender || form.consumerGender ||
+                               form.otherCustomerSegment === 'Kids';
 
-        if (isMen) {
-            if (isYouth) categories.push('youth_men');
-            if (isOlder) categories.push('men');
-        }
-        if (isWomen) {
-            if (isYouth) categories.push('youth_women');
-            if (isOlder) categories.push('women');
-        }
-        return categories;
-    }, [form.customerAge, form.customerGender, section3.q3_3.categories]);
+        if (!hasDemographics) return [];
 
-    // Filter out "Kids 6-14" from customerAgeOptions
-    const filteredCustomerAgeOptions = useMemo(() => {
-        const options = { ...formTranslations.section3.customerAgeOptions };
-        delete (options as any)["Kids 6-14"];
+        if (form.otherCustomerSegment === 'Kids' || (form.consumerAge && form.consumerAge.includes('Babies <5'))) {
+            categories.push('kids');
+        }
+        
+        const ages = [...(form.customerAge || []), ...(form.consumerAge || [])];
+        const gender = form.customerGender || form.consumerGender;
+        const isMen = gender === 'Men' || gender === 'Men and Women';
+        const isWomen = gender === 'Women' || gender === 'Men and Women';
+        
+        if (isWomen && ages.includes('15-21')) categories.push('young_girls');
+        if (isMen && ages.includes('15-21')) categories.push('young_boys');
+        if (isWomen && ages.includes('22-30')) categories.push('young_women');
+        if (isMen && ages.includes('22-30')) categories.push('young_men');
+        if (isWomen && (ages.includes('31-50') || ages.includes('50+'))) categories.push('women');
+        if (isMen && (ages.includes('31-50') || ages.includes('50+'))) categories.push('men');
+        
+
+        
+        return Array.from(new Set(categories));
+    }, [form.otherCustomerSegment, form.customerAge, form.customerGender, form.consumerAge, form.consumerGender, section1.q1_4.options]);
+
+        const subcategoryOptions = useMemo(() => {
+        const options: string[] = [];
+        const catsToUse = activeCategories.length > 0 ? activeCategories : Object.keys(section1.q1_4.options);
+        catsToUse.forEach(cat => {
+            const catOptions = (section1.q1_4.options as any)[cat] || [];
+            catOptions.forEach((opt: string) => {
+                if (!options.includes(opt)) options.push(opt);
+            });
+        });
         return options;
-    }, []);
+    }, [activeCategories, section1.q1_4.options]);
 
 
     return (
@@ -170,19 +188,19 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
 
                     <SuggestedInput lang={lang} suggestion={suggestions.subCategory} onAccept={(val) => update('subCategory', val)}>
                         <Label lang={lang} text={section1.q1_4.subCategory} required />
-                        <SingleChips
+                        <MultiChips
                             lang={lang}
-                            options={section1.q1_4.options}
-                            value={form.subCategory}
+                            options={subcategoryOptions}
+                            value={form.subCategory || []}
                             onChange={(val) => update('subCategory', val)}
                         />
-                        {form.subCategory === 'Other' && (
+                        {form.subCategory.includes('Others') && (
                             <div className="mt-3">
                                 <TextInput
                                     lang={lang}
                                     value={form.subCategoryOther || ''}
                                     onChange={(val) => update('subCategoryOther', val)}
-                                    placeholder={lifestyleFormTranslations.specifyOther}
+                                    placeholder={section1.q1_4.otherPlaceholder}
                                     required
                                 />
                             </div>
@@ -229,23 +247,28 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                         <div>
                             <Label qIndex="2.2" lang={lang} text={section2.q2_2.text} className="mb-3" />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {Object.entries(section2.q2_2.options).map(([key, labelText]) => (
-                                    <div key={key}>
-                                        <Label lang={lang} text={labelText} className="mb-2 font-medium" />
-                                        <SuggestedInput
-                                            lang={lang}
-                                            suggestion={(suggestions as any)[`special${key}`]}
-                                            onAccept={(val) => update(`special${key}`, val)}
-                                        >
-                                            <TextInput
+                                {Object.entries(section2.q2_2.options).map(([key, labelText]) => {
+                                    const fieldKey = key === 'Design' ? 'specialLook' : (key === 'Technique' ? 'specialTech' : (key === 'Others' ? 'specialOthers' : `special${key}`));
+                                    const suggestionKey = fieldKey;
+                                    
+                                    return (
+                                        <div key={key}>
+                                            <Label lang={lang} text={labelText} className="mb-2 font-medium" />
+                                            <SuggestedInput
                                                 lang={lang}
-                                                value={(form as any)[`special${key}` === 'specialDesign' ? 'specialLook' : `special${key}`] || ''}
-                                                onChange={(val) => update(`special${key}` === 'specialDesign' ? 'specialLook' : `special${key}`, val)}
-                                                placeholder={section2.q2_2.placeholders[key as keyof typeof section2.q2_2.placeholders]}
-                                            />
-                                        </SuggestedInput>
-                                    </div>
-                                ))}
+                                                suggestion={(suggestions as any)[suggestionKey]}
+                                                onAccept={(val) => update(fieldKey, val)}
+                                            >
+                                                <TextInput
+                                                    lang={lang}
+                                                    value={(form as any)[fieldKey] || ''}
+                                                    onChange={(val) => update(fieldKey, val)}
+                                                    placeholder={section2.q2_2.placeholders[key as keyof typeof section2.q2_2.placeholders]}
+                                                />
+                                            </SuggestedInput>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -284,7 +307,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.age} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.consumerAgeOptions}
+                                        options={section3.consumerAgeOptions}
                                         value={form.consumerAge}
                                         onChange={(val) => update('consumerAge', val)}
                                     />
@@ -293,7 +316,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.gender} className="text-[15px]" />
                                     <SingleChips
                                         lang={lang}
-                                        options={formTranslations.section3.genderOptions}
+                                        options={section3.genderOptions}
                                         value={form.consumerGender}
                                         onChange={(val) => update('consumerGender', val)}
                                     />
@@ -302,7 +325,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.income} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.incomeOptions}
+                                        options={section3.incomeOptions}
                                         value={form.consumerIncome}
                                         onChange={(val) => update('consumerIncome', val)}
                                     />
@@ -311,7 +334,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3A.geography} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={formTranslations.section3.geoOptions}
+                                        options={section3.geoOptions}
                                         value={form.consumerGeography}
                                         onChange={(val) => update('consumerGeography', val)}
                                     />
@@ -349,13 +372,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             <Label 
                                 qIndex="3B" 
                                 lang={lang} 
-                                text={{
-                                    en: "Primary Customer (person who buys)",
-                                    hi: "प्राथमिक ग्राहक (जो व्यक्ति खरीदता है)",
-                                    ta: "முதன்மை வாடிக்கையாளர் (வாங்கும் நபர்)",
-                                    te: "ప్రాథమిక కస్టమర్ (కొనుగోలు చేసే వ్యక్తి)",
-                                    gu: "પ્રાથમિક ગ્રાહક (જે વ્યક્તિ ખરીદે છે)"
-                                }} 
+                                text={section3.q3B.text} 
                                 className="font-semibold text-lg text-neutral-800 mb-4 block" 
                             />
                             <div className="space-y-6">
@@ -363,7 +380,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3B.age} className="text-[15px]" />
                                     <MultiChips
                                         lang={lang}
-                                        options={filteredCustomerAgeOptions}
+                                        options={section3.customerAgeOptions}
                                         value={form.customerAge}
                                         onChange={(val) => update('customerAge', val)}
                                     />
@@ -372,11 +389,32 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     <Label lang={lang} text={section3.q3B.gender} className="text-[15px]" />
                                     <SingleChips
                                         lang={lang}
-                                        options={formTranslations.section3.genderOptions}
+                                        options={section3.genderOptions}
                                         value={form.customerGender}
                                         onChange={(val) => update('customerGender', val)}
                                     />
                                 </SuggestedInput>
+
+                                <div>
+                                    <Label lang={lang} text={section3.q3B.sub_question} className="text-[15px]" />
+                                    <SingleChips
+                                        lang={lang}
+                                        options={section3.q3B.sub_options}
+                                        value={form.otherCustomerSegment || ''}
+                                        onChange={(val) => update('otherCustomerSegment', val)}
+                                    />
+                                    {form.otherCustomerSegment === 'Others' && (
+                                        <div className="mt-3">
+                                            <TextInput
+                                                lang={lang}
+                                                value={form.otherCustomerSegmentBrief || ''}
+                                                onChange={(val) => update('otherCustomerSegmentBrief', val)}
+                                                placeholder={section3.q3B.sub_placeholder}
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -389,14 +427,14 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                             return (
                                                 <div key={cat} className="p-4 border border-neutral-100 rounded-xl bg-slate-50 shadow-sm">
                                                     <h4 className="font-semibold text-indigo-900 mb-4 pb-2 border-b border-indigo-100 flex items-center justify-between">
-                                                        <span>{section3.q3_3.categories[cat][lang] || section3.q3_3.categories[cat].en}</span>
-                                                        <span className="text-xs font-normal text-indigo-400">Select up to 2</span>
+                                                        <span>{section3.q3_3.categories[cat] ? (section3.q3_3.categories[cat][lang] || section3.q3_3.categories[cat].en) : cat}</span>
+                                                        <span className="text-xs font-normal text-indigo-400">Select up to 3</span>
                                                     </h4>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                                                        {section3.q3_3.options[cat].map((opt: string) => {
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                        {section3.q3_3.options[cat] && section3.q3_3.options[cat].map((opt: string) => {
                                                             const isSelected = form.customerLifestyle.includes(opt);
                                                             const selectedInCategory = form.customerLifestyle.filter(v => section3.q3_3.options[cat].includes(v)).length;
-                                                            const limitReached = selectedInCategory >= 2;
+                                                            const limitReached = selectedInCategory >= 3;
                                                             const isDisabled = !isSelected && limitReached;
                                                             
                                                             const titlePart = opt.includes('(') ? opt.split('(')[0].trim() : opt;
@@ -413,17 +451,20 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                                                             update('customerLifestyle', [...form.customerLifestyle, opt]);
                                                                         }
                                                                     }}
-                                                                    className={`flex flex-col rounded-xl border-2 transition-all cursor-pointer overflow-hidden bg-white shadow-sm h-full ${
-                                                                        isSelected 
-                                                                            ? 'border-blue-600 ring-1 ring-blue-600 scale-[1.02]' 
-                                                                            : isDisabled 
-                                                                                ? 'border-neutral-200 opacity-40 grayscale-[0.5]' 
-                                                                                : 'border-neutral-100 hover:border-blue-300'
+                                                                    className={`flex flex-col rounded-lg border text-left transition-all duration-200 cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[220px] ${
+                                                                        isSelected
+                                                                                ? "border-indigo-600 ring-2 ring-indigo-500 shadow-sm"
+                                                                                : isDisabled
+                                                                                    ? "border-neutral-200 opacity-40 grayscale-[0.5] cursor-not-allowed"
+                                                                                    : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md"
                                                                     }`}
                                                                 >
-                                                                    <div className="aspect-square w-full bg-slate-50 flex items-center justify-center text-slate-400 text-[10px] text-center p-4">
-                                                                        {/* Placeholder for psychographic imagery */}
-                                                                        <div className="p-2 border border-slate-200 rounded text-[9px] uppercase tracking-tighter">IMAGE PREVIEW</div>
+                                                                    <div className="aspect-[4/3] w-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400 overflow-hidden">
+                                                                        {psychographicImageMap[opt] ? (
+                                                                            <img src={psychographicImageMap[opt]} alt={titlePart} className="w-full h-full object-contain" />
+                                                                        ) : (
+                                                                            <div className="p-2 border border-slate-200 rounded text-[9px] uppercase tracking-tighter">IMAGE PREVIEW</div>
+                                                                        )}
                                                                     </div>
                                                                     <div className="p-3">
                                                                         <div className="font-bold text-[13px] text-neutral-900 leading-tight">
@@ -485,6 +526,17 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                 value={form.shoppingCompany}
                                 onChange={(val) => update('shoppingCompany', val)}
                             />
+                            {form.shoppingCompany.includes('Others') && (
+                                <div className="mt-3">
+                                    <TextInput
+                                        lang={lang}
+                                        value={form.shoppingCompanyOtherBrief || ''}
+                                        onChange={(val) => update('shoppingCompanyOtherBrief', val)}
+                                        placeholder={lifestyleFormTranslations.describeBriefly}
+                                        required
+                                    />
+                                </div>
+                            )}
                         </SuggestedInput>
                     </div>
                 </Section>
@@ -650,22 +702,26 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             </div>
                         </div>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.brandAsPerson} onAccept={(val) => update('brandAsPerson', val)}>
+                                                <SuggestedInput lang={lang} suggestion={suggestions.brandAsPerson} onAccept={(val) => update('brandAsPerson', val)}>
                             <Label qIndex="7.2" lang={lang} text={section7.q7_2.text} />
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {section7.q7_2.options.filter(o => o !== 'Other').map(opt => (
-                                    <button
-                                        key={opt} type="button"
-                                        onClick={() => update('brandAsPerson', form.brandAsPerson === opt ? "" : opt)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                                            form.brandAsPerson === opt 
-                                                ? 'bg-neutral-900 text-white shadow-sm border-neutral-900' 
-                                                : 'bg-neutral-100 text-neutral-800 border-neutral-200 hover:border-neutral-300'
-                                        }`}
-                                    >
-                                        {opt}
-                                    </button>
-                                ))}
+                            <div className="mt-3">
+                                <SingleChips
+                                    lang={lang}
+                                    options={section7.q7_2.options}
+                                    value={form.brandAsPerson}
+                                    onChange={(val) => update('brandAsPerson', val)}
+                                />
+                                {form.brandAsPerson === 'Other' && (
+                                    <div className="mt-3">
+                                        <TextInput
+                                            lang={lang}
+                                            value={form.brandAsPersonOther || ''}
+                                            onChange={(val) => update('brandAsPersonOther', val)}
+                                            placeholder={section7.q7_2.placeholder}
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </SuggestedInput>
 
@@ -760,6 +816,29 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                 />
                             </div>
                         </div>
+
+                        <div>
+                            <Label qIndex="7.6" lang={lang} text={section7.q7_6.text} />
+                            <div className="mt-3">
+                                <SingleChips
+                                    lang={lang}
+                                    options={section7.q7_6.options}
+                                    value={form.featureFounderEmployee}
+                                    onChange={(val) => update('featureFounderEmployee', val)}
+                                />
+                                {form.featureFounderEmployee === 'Yes' && (
+                                    <div className="mt-3">
+                                        <TextInput
+                                            lang={lang}
+                                            value={form.featureFounderEmployeeBrief || ''}
+                                            onChange={(val) => update('featureFounderEmployeeBrief', val)}
+                                            placeholder={section7.q7_6.placeholder}
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </Section>
             )}
@@ -780,6 +859,15 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             value={form.customerID || ''}
                             onChange={(val) => update('customerID', val)}
                             placeholder={section8.customerID}
+                        />
+                    </div>
+                    <div>
+                        <Label lang={lang} text={section8.storesListLink} className="mb-2" />
+                        <TextInput
+                            lang={lang}
+                            value={form.storesListLink || ''}
+                            onChange={(val) => update('storesListLink', val)}
+                            placeholder={lifestyleFormTranslations.pasteStoreLink}
                         />
                     </div>
                     

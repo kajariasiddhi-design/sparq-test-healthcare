@@ -9,7 +9,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AdPillar, Story, Language, Frame } from '../types';
-import { translations, addTranslations } from '../data/translations';
+import { translations } from '../data/translations'; import { addTranslations } from '../data/translation-utils';
 import { AccessLevel, ACCESS_LEVELS } from '../constants';
 import { TextArea, TextInput, TranslatedText, Label } from './FormElements.tsx';
 

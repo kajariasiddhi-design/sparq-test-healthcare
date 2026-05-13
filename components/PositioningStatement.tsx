@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { diffWordsWithSpace } from 'diff';
 import { BrandDescriptionResponse, Language, Suggestion } from '../types';
-import { translations, addTranslations } from '../data/translations';
+import { translations } from '../data/translations'; import { addTranslations } from '../data/translation-utils';
 import { TextArea, TranslatedText } from './FormElements.tsx';
 import { stripHtml } from '../utils';
 
@@ -287,11 +287,25 @@ const PositioningStatement: React.FC<PositioningStatementProps> = ({
                 )}
 
                 {handleGenerateWorlds && (
-                    <div className="mt-6 flex justify-center items-center gap-4 border-t border-slate-200 pt-6">
+                    <div className="mt-20 flex flex-col items-center gap-4 border-t border-slate-200 pt-10 relative">
+                        {brandDescriptionResponse && !hasWorlds && !isGeneratingWorlds && (
+                            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
+                                <div className="bg-indigo-600 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-xl whitespace-nowrap relative">
+                                    <TranslatedText lang={lang} text={addTranslations(
+                                        "Please generate worlds in order to complete this form.",
+                                        "इस फॉर्म को पूरा करने के लिए कृपया दुनिया उत्पन्न करें।",
+                                        "இந்த படிவத்தை முடிக்க தயவுசெய்து உலகங்களை உருவாக்கவும்.",
+                                        "ఈ ఫారమ్‌ను పూర్తి చేయడానికి దయచేసి ప్రపంచాలను సృష్టించండి.",
+                                        "આ ફોર્મ પૂર્ણ કરવા માટે કૃપા કરીને વિશ્વો બનાવો."
+                                    )} />
+                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-[10px] border-transparent border-t-indigo-600"></div>
+                                </div>
+                            </div>
+                        )}
                         <button
                             onClick={handleGenerateWorlds}
                             disabled={isGeneratingWorlds || isEditingPositioning}
-                            className="w-full inline-flex justify-center items-center px-8 py-3 border border-teal-700 text-base font-medium rounded-md shadow-sm text-teal-700 bg-white hover:bg-teal-700 hover:text-white disabled:bg-slate-200 disabled:text-slate-500 disabled:border-slate-200 transition-colors"
+                            className="w-full inline-flex justify-center items-center px-8 py-4 border-2 border-teal-700 text-lg font-bold rounded-xl shadow-lg text-teal-700 bg-white hover:bg-teal-700 hover:text-white transition-all transform active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-500 disabled:border-slate-200"
                         >
                             {isGeneratingWorlds ? (
                                 <>

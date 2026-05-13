@@ -17,7 +17,7 @@ import JSZip from 'jszip';
 import { PROD_WEBHOOK_URL, TEST_WEBHOOK_URL, WEBHOOK_ACTIONS, GEMINI_API_KEY, REGIONS, REGION_SALESPERSONS, Region, ACCESS_LEVELS, getUserAccessLevel, AccessLevel } from './constants';
 import { translations, formTranslations, industrialFormTranslations } from './data/translations';
 import { NEW_SAMPLE_PROFILES } from './data/sampleProfiles';
-import { NewFormData, UploadedImage, BrandDescriptionResponse, FormSuggestions, IndustrialFormSuggestions, AdPillar, Story, Language, PastSubmission, Frame, TranscribedClip, MultilingualText, IndustrialFormData, World } from './types';
+import { NewFormData, UploadedImage, BrandDescriptionResponse, FormSuggestions, IndustrialFormSuggestions, AdPillar, Story, Language, PastSubmission, Frame, TranscribedClip, MultilingualText, IndustrialFormData, World, LifestyleFormData, RetailFormData } from './types';
 import {
   getInitialFormData,
   transformDataForWebhook,
@@ -31,7 +31,9 @@ import {
   transformLifestyleDataForWebhook,
   transformRetailDataForWebhook,
   mapRawDataToLifestyleFormData,
-  mapRawDataToRetailFormData
+  mapRawDataToRetailFormData,
+  inferCategory,
+  mapRawDataToIndustrialFormData
 } from './utils';
 import { urlToUploadedImage, callGemini3 } from './utils/api';
 import { exportStructuredPDF, exportStoryBriefPDF } from './utils/pdfGenerator';
@@ -265,6 +267,8 @@ function App() {
   const [imageToView, setImageToView] = useState<string | null>('');
   const [isSavingWorlds, setIsSavingWorlds] = useState(false);
   const [worldSaveSuccess, setWorldSaveSuccess] = useState(false);
+  const [worldRemarks, setWorldRemarks] = useState('');
+  const [worldSubmitted, setWorldSubmitted] = useState(false);
   const [isSavingPillars, setIsSavingPillars] = useState(false);
   const [pillarSaveSuccess, setPillarSaveSuccess] = useState(false);
 
@@ -458,6 +462,8 @@ function App() {
     setSearchError(null);
     setIsLoadModalOpen(false);
     setWorldSaveSuccess(false);
+    setWorldRemarks('');
+    setWorldSubmitted(false);
     setPillarSaveSuccess(false);
     setUserDismissedWorldsBlur(false);
   }, [setWorldImages, setSearchResults]);
@@ -547,7 +553,7 @@ function App() {
         if (val && typeof val === 'object') {
           if ('en' in val && ('hi' in val || 'ta' in val)) {
             // It's a translation object, flatten it
-            obj[key] = val[lang] || val.en;
+            obj[key] = val.en;
           } else {
             // It's a regular object, recurse
             flattenTranslations(val);
@@ -663,7 +669,12 @@ function App() {
         setSearchError(null);
 
         // 1. Restore Positioning / Brand Description
-        let positioning = data["Positioning"] || data["positioning"] || data["Brand Description"] || data["positioningStatement"] || data.brandDescriptionResponse?.positioning;
+        let positioning = data["Updated Positioning"] || data["Positioning"] || data["positioning"] || data["Brand Description"] || data["positioningStatement"] || data.brandDescriptionResponse?.positioning;
+
+        let worldPrefsRaw = data["World Preferences"] || data["World Rankings"] || data["world_rankings"] || data["Selected Worlds"];
+        let basicWorldsRaw = data["Worlds"] || data["worlds"] || data["Worlds Snapshot"];
+        let pillarPrefsRaw = data["Pillar Preferences"] || data["Pillar Rankings"] || data["pillar_rankings"];
+        let basicPillarsRaw = data["Ad Pillers"] || data["pillars"] || data["Ad Pillars Snapshot"];
         
         // If positioning is missing but other results exist, we should still show the results section
         const hasResults = !!(positioning || worldPrefsRaw || basicWorldsRaw || pillarPrefsRaw || basicPillarsRaw);
@@ -682,8 +693,8 @@ function App() {
         }
 
         // 2. Restore Worlds from Preferences (ranked/recommended) or basic Worlds
-        const worldPrefsRaw = data["World Preferences"] || data["World Rankings"] || data["world_rankings"] || data["Selected Worlds"];
-        const basicWorldsRaw = data["Worlds"] || data["worlds"] || data["Worlds Snapshot"];
+        
+        
 
         if (worldPrefsRaw) {
           try {
@@ -714,8 +725,8 @@ function App() {
           }
         }
 
-        const pillarPrefsRaw = data["Pillar Preferences"];
-        const basicPillarsRaw = data["Ad Pillars"] || data.adPillars || data["Pillars"];
+        pillarPrefsRaw = data["Pillar Preferences"];
+        basicPillarsRaw = data["Ad Pillars"] || data.adPillars || data["Pillars"];
 
         if (pillarPrefsRaw) {
           try {
@@ -751,6 +762,20 @@ function App() {
         // keeps their own identity and associated access level (FULL, PILLAR, or WORLD).
         // If they save changes, the record will then be correctly attributed to them.
 
+        // 5. Restore World Remarks
+        const remarksRaw = data["World Remarks"] || data["optional_remarks"] || '';
+        setWorldRemarks(remarksRaw);
+
+        // 6. If loaded worlds already have rankings, suppress the "Rank worlds" callout
+        if (worldPrefsRaw) {
+          try {
+            const worldPrefs = typeof worldPrefsRaw === 'string' ? JSON.parse(worldPrefsRaw) : worldPrefsRaw;
+            if (Array.isArray(worldPrefs) && worldPrefs.some((wp: any) => (wp.user_rank || wp.ranking || 0) > 0)) {
+              setWorldSubmitted(true);
+            }
+          } catch (e) { /* ignore parse errors, badge will show as fallback */ }
+        }
+
         setSessionId(data["app_session_id"] || data["App Session ID"] || data.session_id || data.sessionId);
         setLoadedNotification(`${translations.loadResponsesModal.loadedNotification[lang]} "${submission.brandName}"`);
         setTimeout(() => setLoadedNotification(null), 3000);
@@ -763,7 +788,7 @@ function App() {
     } finally {
       setIsLoadingFullSubmission(false);
     }
-  }, [sendToWebhook, lang, setWorlds, setAdPillars, setLang, setSessionId, setFmcgForm, setIndustrialForm, setCategory, setBrandDescriptionResponse, setEditablePositioning, setOriginalPositioning, setFmcgPackImages, setIndustrialPackImages, setLifestyleForm, setRetailForm, setLifestylePackImages, setRetailPackImages]);
+  }, [sendToWebhook, lang, setWorlds, setAdPillars, setLang, setSessionId, setFmcgForm, setIndustrialForm, setCategory, setBrandDescriptionResponse, setEditablePositioning, setOriginalPositioning, setFmcgPackImages, setIndustrialPackImages, setLifestyleForm, setRetailForm, setLifestylePackImages, setRetailPackImages, setWorldRemarks, setWorldSubmitted]);
 
   const handleWebhookSubmit = useCallback(async (event?: React.FormEvent) => {
     event?.preventDefault();
@@ -1003,7 +1028,16 @@ function App() {
         : newText;
       return { ...prev, positioning: newPositioning };
     });
-  }, [lang]);
+
+    // Send the accepted enhanced text to n8n so it can save it to Airtable
+    const context = getFullContext();
+    if (context) {
+      sendToWebhook(WEBHOOK_ACTIONS.SAVE_ENHANCED_POSITIONING, {
+        ...context,
+        enhanced: newText
+      });
+    }
+  }, [lang, getFullContext, sendToWebhook]);
 
   const handleSaveSelectedPillars = useCallback(async (selectedIndices: number[]) => {
     if (selectedIndices.length === 0) return;
@@ -1928,62 +1962,95 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
                     </div>
                   </div>
 
+                  {/* Optional Remarks */}
+                  <div className="mt-4 p-4 bg-slate-50 rounded-md border border-slate-200" onClick={(e) => e.stopPropagation()}>
+                    <h4 className="font-semibold text-slate-700 mb-2">Optional Remarks</h4>
+                    <textarea
+                      value={worldRemarks}
+                      onChange={(e) => setWorldRemarks(e.target.value)}
+                      placeholder="Add any additional notes or instructions for these rankings..."
+                      rows={2}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm shadow-inner resize-none bg-white"
+                    />
+                  </div>
+
                   <div className="mt-10 pt-8 border-t border-slate-200">
-                    <div className="flex flex-col sm:flex-row gap-3 w-full">
-                      <button
-                        onClick={async () => {
-                          setIsSavingWorlds(true);
-                          setWorldSaveSuccess(false);
-                          try {
-                            const context = getFullContext();
-                            const rankedWorlds = worlds.filter(w => (w.ranking || 0) > 0).sort((a, b) => (a.ranking || 0) - (b.ranking || 0));
-
-                            const rankingsMap: Record<string, string> = {};
-                            rankedWorlds.forEach(w => {
-                              rankingsMap[`rank_${w.ranking} `] = w.title;
-                            });
-
-                            await sendToWebhook("save_worlds", {
-                              ...context,
-                              ...rankingsMap,
-                              all_worlds: worlds.map(w => ({
-                                id: w.id,
-                                title: w.title,
-                                description: w.description,
-                                is_custom: !!w.isCustom,
-                                is_recommended: w.recommended ? "yes" : "no",
-                                recommendation_reason: w.recommendationReason || "",
-                                user_rank: w.ranking || 0
-                              }))
-                            });
-                            setWorldSaveSuccess(true);
-                            setTimeout(() => setWorldSaveSuccess(false), 3000);
-                          } catch (e) {
-                            console.error("Failed to save worlds", e);
-                          } finally {
-                            setIsSavingWorlds(false);
-                          }
-                        }}
-                        disabled={isSavingWorlds}
-                        className="w-full sm:flex-1 h-[52px] bg-white border-2 border-emerald-600 text-emerald-700 font-black rounded-xl shadow-sm hover:bg-emerald-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-slate-50 uppercase tracking-wider text-[13px] relative group"
-                      >
-                        {isSavingWorlds ? (
-                          <div className="loader border-[#10b981] border-t-transparent w-5 h-5 !border-2"></div>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    {/* Bouncing callout — visible until form is submitted */}
+                    {!worldSubmitted && (
+                      <div className="flex justify-center mb-4">
+                        <div className="animate-bounce inline-flex items-center gap-2 bg-violet-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
-                        )}
-                        <span>{isSavingWorlds ? 'Saving...' : 'Save Rankings'}</span>
-                        {worldSaveSuccess && (
-                          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-emerald-600 font-bold text-xs bg-white px-3 py-2 rounded-lg border border-emerald-100 shadow-lg animate-bounce z-20 whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            Saved!
-                          </div>
-                        )}
-                      </button>
+                          Rank worlds and submit form.
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Thank you message — visible after submission */}
+                    {worldSubmitted && (
+                      <div className="flex justify-center mb-4">
+                        <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          Thank you, your form has been submitted!
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
+                      {(() => {
+                        const hasRankedAny = worlds.some(w => (w.ranking || 0) > 0);
+                        return (
+                          <button
+                            onClick={async () => {
+                              setIsSavingWorlds(true);
+                              setWorldSaveSuccess(false);
+                              try {
+                                const context = getFullContext();
+                                const rankedWorlds = worlds.filter(w => (w.ranking || 0) > 0).sort((a, b) => (a.ranking || 0) - (b.ranking || 0));
+
+                                const rankingsMap: Record<string, string> = {};
+                                rankedWorlds.forEach(w => {
+                                  rankingsMap[`rank_${w.ranking} `] = w.title;
+                                });
+
+                                await sendToWebhook("save_worlds", {
+                                  ...context,
+                                  ...rankingsMap,
+                                  optional_remarks: worldRemarks,
+                                  all_worlds: worlds.map(w => ({
+                                    id: w.id,
+                                    title: w.title,
+                                    description: w.description,
+                                    is_custom: !!w.isCustom,
+                                    is_recommended: w.recommended ? "yes" : "no",
+                                    recommendation_reason: w.recommendationReason || "",
+                                    user_rank: w.ranking || 0
+                                  }))
+                                });
+                                setWorldSubmitted(true);
+                              } catch (e) {
+                                console.error("Failed to save worlds", e);
+                              } finally {
+                                setIsSavingWorlds(false);
+                              }
+                            }}
+                            disabled={isSavingWorlds || !hasRankedAny}
+                            className={`w-full sm:flex-1 h-[52px] border-2 font-black rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-[13px] relative group ${hasRankedAny ? 'bg-white border-emerald-600 text-emerald-700 hover:bg-emerald-50' : 'bg-slate-100 border-slate-300 text-slate-400 cursor-not-allowed'} disabled:opacity-50`}
+                          >
+                            {isSavingWorlds ? (
+                              <div className="loader border-[#10b981] border-t-transparent w-5 h-5 !border-2"></div>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                              </svg>
+                            )}
+                            <span>{isSavingWorlds ? 'Saving...' : accessLevel === ACCESS_LEVELS.WORLD_ONLY ? 'Save Rankings and Submit Form' : 'Save Rankings'}</span>
+                          </button>
+                        );
+                      })()}
 
                       {accessLevel !== ACCESS_LEVELS.WORLD_ONLY && (
                         <button
