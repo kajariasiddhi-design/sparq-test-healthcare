@@ -941,7 +941,10 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
 
     formData.usageOccasions = data["Consumer Usage Occasions"] || '';
     formData.shoppingExperience = data["In-store Shopping Experience"] || '';
-    formData.shoppingCompany = parseArrayOrCsv(data["Shopping Company"] || data["Typical Shopping Companions"]);
+    const rawLifestyleCompany = parseArrayOrCsv(data["Shopping Company"] || data["Typical Shopping Companions"]);
+    const lifestyleCompanyOther = rawLifestyleCompany.find(s => s.startsWith('Others:'));
+    formData.shoppingCompany = lifestyleCompanyOther ? rawLifestyleCompany.map(s => s.startsWith('Others:') ? 'Others' : s) : rawLifestyleCompany;
+    formData.shoppingCompanyOtherBrief = lifestyleCompanyOther ? lifestyleCompanyOther.replace(/^Others:\s*/, '') : '';
 
     formData.keyBenefits = data["Benefits Offered"] || '';
     formData.competitorDifference = data["Unique Benefits vs Competitors"] || '';
@@ -1007,7 +1010,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
 
     formData.salesperson = data["Salesperson"] || '';
     formData.customerID = data["Customer ID"] || '';
-    formData.storeName = data["Store Name"] || '';
+    formData.storeName = data["Store Name"] || data["Brand Name"] || '';
     const primCats = parseArrayOrCsv(data["Primary Categories"]);
     const primOther = primCats.find(s => s.startsWith('Others:'));
     formData.primaryCategories = primOther ? primCats.map(s => s.startsWith('Others:') ? 'Others' : s) : primCats;
@@ -1050,7 +1053,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.shopperJourney = data["Shopper Journey"] || '';
     const rawOccasion = parseArrayOrCsv(data["Shopping Occasion trigger"] || data["Shopping Occasion"]);
     const occasionOther = rawOccasion.find(s => s.startsWith('Others:'));
-    formData.shoppingOccasion = occasionOther ? rawOccasion.map(s => s.startsWith('Others:') ? 'Others' : s) : rawOccasion;
+    formData.shoppingOccasion = occasionOther ? rawOccasion.map(s => s.startsWith('Others:') ? 'Other' : s) : rawOccasion;
     formData.shoppingOccasionOther = occasionOther ? occasionOther.replace(/^Others:\s*/, '') : '';
     
     formData.keyBenefits = data["Key Benefits Offered"] || data["Benefits Offered"] || '';
