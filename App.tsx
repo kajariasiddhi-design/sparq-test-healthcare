@@ -671,9 +671,9 @@ function App() {
         // 1. Restore Positioning / Brand Description
         let positioning = data["Updated Positioning"] || data["Positioning"] || data["positioning"] || data["Brand Description"] || data["positioningStatement"] || data.brandDescriptionResponse?.positioning;
 
-        let worldPrefsRaw = data["World Preferences"] || data["World Rankings"] || data["world_rankings"] || data["Selected Worlds"];
+        let worldPrefsRaw = data["World Preferences"] || data["World Rankings"] || data["world_rankings"] || data["Selected Worlds"] || data["all_worlds"];
         let basicWorldsRaw = data["Worlds"] || data["worlds"] || data["Worlds Snapshot"];
-        let pillarPrefsRaw = data["Pillar Preferences"] || data["Pillar Rankings"] || data["pillar_rankings"];
+        let pillarPrefsRaw = data["Pillar Preferences"] || data["Pillar Rankings"] || data["pillar_rankings"] || data["all_pillars"];
         let basicPillarsRaw = data["Ad Pillers"] || data["pillars"] || data["Ad Pillars Snapshot"];
         
         // If positioning is missing but other results exist, we should still show the results section
