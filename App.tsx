@@ -72,7 +72,7 @@ function robustJsonParse(raw: any): any {
   // string value lost its closing quote and fused with the separator comma.
   // e.g. "recommendation_reason":","user_rank" -> "recommendation_reason":"","user_rank"
   try {
-    const fixed = str.replace(/:",("[a-zA-Z_])/g, ':"","$1');
+    const fixed = str.replace(/:","([a-zA-Z_])/g, ':"","$1');
     return JSON.parse(fixed);
   } catch (_) { /* fall through */ }
   // Attempt 3: sanitize unescaped control characters
@@ -88,7 +88,7 @@ function robustJsonParse(raw: any): any {
   // Attempt 4: combine both fixes
   try {
     const both = str
-      .replace(/:",("[a-zA-Z_])/g, ':"","$1')
+      .replace(/:","([a-zA-Z_])/g, ':"","$1')
       .replace(/[\x00-\x1f\x7f]/g, (c: string) => {
         if (c === '\n') return '\\n';
         if (c === '\r') return '\\r';
