@@ -446,6 +446,17 @@ export const parseArrayOrCsv = (value: any): string[] => {
     return [String(value)];
 };
 
+/**
+ * Safely coerce any webhook value to a string.
+ * Handles arrays (joins with ', '), null/undefined (returns ''), and other types.
+ */
+const safeStr = (val: any): string => {
+    if (typeof val === 'string') return val;
+    if (val == null) return '';
+    if (Array.isArray(val)) return val.map(String).filter(Boolean).join(', ');
+    return String(val);
+};
+
 export const inferCategory = (data: any): 'fmcg' | 'industrial' | 'lifestyle' | 'retail' => {
     // Check for explicit category field first
     if (data.category === 'industrial' || data.Category === 'industrial') return 'industrial';
@@ -898,7 +909,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.subCategoryOther = subCatOther ? subCatOther.replace(/^Others:\s*/, '') : '';
     formData.brandSpecial = data["Brand's Special Qualities"] || '';
     
-    const [founder, year] = (data["Founded"] || ',').split(',').map((s: string) => s.trim());
+    const [founder, year] = safeStr(data["Founded"] || ',').split(',').map((s: string) => s.trim());
     formData.founder = founder || '';
     formData.foundedYear = year || '';
     formData.brandRegions = data["Primary Regions"] || '';
@@ -920,7 +931,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.customerGender = data["Customer - Gender"] || '';
     formData.customerLifestyle = parseArrayOrCsv(data["Lifestyle & Beliefs"] || data["Typical Lifestyle/Style Preference"]);
 
-    const ocSeg = data["Other Customer Segment"] || '';
+    const ocSeg = safeStr(data["Other Customer Segment"]);
     if (ocSeg.startsWith('Others:')) {
         formData.otherCustomerSegment = 'Others';
         formData.otherCustomerSegmentBrief = ocSeg.replace(/^Others:\s*/, '');
@@ -945,7 +956,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.desiredAttributes = attrOther ? rawAttrs.map(a => a.startsWith('Other:') ? 'Other' : a) : rawAttrs;
     formData.desiredAttributesOther = attrOther ? attrOther.replace(/^Other:\s*/, '') : '';
 
-    const bapRaw = data["Brand Persona"] || data["Consumer's View of Brand Persona"] || '';
+    const bapRaw = safeStr(data["Brand Persona"] || data["Consumer's View of Brand Persona"]);
     if (bapRaw.startsWith('Other:')) {
         formData.brandAsPerson = 'Other';
         formData.brandAsPersonOther = bapRaw.replace(/^Other:\s*/, '');
@@ -975,7 +986,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
 
     formData.featureStore = data["Feature Store in Ad"] || '';
 
-    const ffRaw = data["Feature Founder/Employee"] || '';
+    const ffRaw = safeStr(data["Feature Founder/Employee"]);
     if (ffRaw.startsWith('Yes:')) {
         formData.featureFounderEmployee = 'Yes';
         formData.featureFounderEmployeeBrief = ffRaw.replace(/^Yes:\s*/, '');
@@ -1004,7 +1015,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.storeCountRegions = data["Store Count and Regions"] || '';
     formData.brandSpecial = data["Store's Special Qualities"] || data["Brand's Special Qualities"] || '';
 
-    const [founder, year] = (data["Founded"] || ',').split(',').map((s: string) => s.trim());
+    const [founder, year] = safeStr(data["Founded"] || ',').split(',').map((s: string) => s.trim());
     formData.founder = founder || '';
     formData.foundedYear = year || '';
     formData.regions = data["Primary Regions"] || '';
@@ -1023,7 +1034,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.shopperCoreNeed = data["Shopper Core Need"] || data["Problem"] || '';
     formData.shopperLifestyle = parseArrayOrCsv(data["Shopper Lifestyle"]);
 
-    const ocSegR = data["Other Customer Segment"] || '';
+    const ocSegR = safeStr(data["Other Customer Segment"]);
     if (ocSegR.startsWith('Others:')) {
         formData.otherCustomerSegment = 'Others';
         formData.otherCustomerSegmentBrief = ocSegR.replace(/^Others:\s*/, '');
@@ -1050,7 +1061,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     
     formData.desiredTone = data["Desired Store Tone"] || data["Desired Brand Tone"] || '';
     formData.desiredWorld = data["Desired Brand World"] || '';
-    const sapRaw = data["Store Persona"] || data["Consumer's View of Brand Persona"] || '';
+    const sapRaw = safeStr(data["Store Persona"] || data["Consumer's View of Brand Persona"]);
     if (sapRaw.startsWith('Other:')) {
         formData.storeAsPerson = 'Other';
         formData.storeAsPersonOther = sapRaw.replace(/^Other:\s*/, '');
@@ -1078,7 +1089,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
         }
     });
 
-    const ongoingOfferRaw = data["Ongoing Offer Event"] || data["Ongoing Offer/Event"] || '';
+    const ongoingOfferRaw = safeStr(data["Ongoing Offer Event"] || data["Ongoing Offer/Event"]);
     formData.ongoingOffer = ongoingOfferRaw === 'No' || !ongoingOfferRaw ? 'No' : 'Yes';
     formData.offerDetails = ongoingOfferRaw && ongoingOfferRaw !== 'No' ? ongoingOfferRaw.replace(/^Yes:\s*/, '') : '';
     formData.storesListLink = data["Store Link"] || '';
