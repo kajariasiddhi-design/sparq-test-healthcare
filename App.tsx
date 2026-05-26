@@ -16,6 +16,12 @@ import html2canvas from 'html2canvas';
 import JSZip from 'jszip';
 import { PROD_WEBHOOK_URL, TEST_WEBHOOK_URL, WEBHOOK_ACTIONS, GEMINI_API_KEY, REGIONS, REGION_SALESPERSONS, Region, ACCESS_LEVELS, getUserAccessLevel, AccessLevel } from './constants';
 import { translations, formTranslations, industrialFormTranslations } from './data/translations';
+import { section3 as lifestyleSection3 } from './data/lifestyle/section3';
+import { section4 as lifestyleSection4 } from './data/lifestyle/section4';
+import { section7 as lifestyleSection7 } from './data/lifestyle/section7';
+import { section3 as retailSection3 } from './data/retail/section3';
+import { section4 as retailSection4 } from './data/retail/section4';
+import { section7 as retailSection7 } from './data/retail/section7';
 import { NEW_SAMPLE_PROFILES } from './data/sampleProfiles';
 import { NewFormData, UploadedImage, BrandDescriptionResponse, FormSuggestions, IndustrialFormSuggestions, AdPillar, Story, Language, PastSubmission, Frame, TranscribedClip, MultilingualText, IndustrialFormData, World, LifestyleFormData, RetailFormData } from './types';
 import {
@@ -1273,12 +1279,18 @@ function App() {
         'adObjectives', 'adFocus',
         'adObjectiveDetails', 'adFocusDetails'
       );
-    } else {
+    } else if (category === 'industrial') {
       // For Industrial, we keep consumerAge, consumerGender etc.
       relevantKeys.push(
         'psychographicOrientation',
         'adObjectiveDetails', 'adFocusDetails'
       );
+    } else if (category === 'lifestyle') {
+      relevantKeys = relevantKeys.filter(k => !['emotionalOutcomeManual', 'adMessageDetails', 'shoppingCompanyOtherBrief'].includes(k));
+      relevantKeys.push('adObjectiveDetails');
+    } else if (category === 'retail') {
+      relevantKeys = relevantKeys.filter(k => !['shopperFeelManual', 'adMessageDetails', 'shoppingCompanyOther', 'otherCustomerSegmentBrief'].includes(k));
+      relevantKeys.push('adObjectiveDetails');
     }
 
     let optionsContext = "";
@@ -1300,6 +1312,51 @@ function App() {
         - adFocus: ${Object.keys(t.section7.q7_4.options).join(', ')}
 
         For 'adObjectiveDetails' and 'adFocusDetails', provide a JSON object where keys are the selected objectives/focus areas, and values are specific details mentioned in the transcript (if any).
+        `;
+    } else if (category === 'lifestyle') {
+      const ls3 = lifestyleSection3;
+      const ls4 = lifestyleSection4;
+      const ls7 = lifestyleSection7;
+      const lifestyleOptionsStr = (Object.values(ls3.q3_3.options) as string[][]).flat().join(', ');
+      optionsContext = `
+        For the following keys, you MUST choose from the provided IDs/Values based on the transcript. If multiple apply and the field accepts arrays, provide an array.
+        - consumerAge: ${Object.keys(ls3.consumerAgeOptions).join(', ')}
+        - consumerGender: ${Object.keys(ls3.genderOptions).join(', ')}
+        - consumerIncome: ${Object.keys(ls3.incomeOptions).join(', ')}
+        - consumerGeography: ${Object.keys(ls3.geoOptions).join(', ')}
+        - customerAge: ${Object.keys(ls3.customerAgeOptions).join(', ')}
+        - customerGender: ${Object.keys(ls3.genderOptions).join(', ')}
+        - customerLifestyle: ${lifestyleOptionsStr}
+        - shoppingCompany: ${Object.keys(ls4.q4_3.options).join(', ')}
+        - desiredTone: ${ls7.q7_1.options.tone.join(', ')}
+        - desiredWorld: ${ls7.q7_1.options.world.join(', ')}
+        - desiredAttributes: ${ls7.q7_1.options.attributes.join(', ')}
+        - brandAsPerson: ${ls7.q7_2.options.join(', ')}
+        - adObjectives: ${ls7.q7_3.options.join(', ')}
+
+        For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
+        `;
+    } else if (category === 'retail') {
+      const r3 = retailSection3;
+      const r4 = retailSection4;
+      const r7 = retailSection7;
+      const retailLifestyleOptionsStr = (Object.values(r3.q3_3.options) as string[][]).flat().join(', ');
+      optionsContext = `
+        For the following keys, you MUST choose from the provided IDs/Values based on the transcript. If multiple apply and the field accepts arrays, provide an array.
+        - shopperAge: ${Object.keys(r3.consumerAgeOptions).join(', ')}
+        - shopperGender: ${Object.keys(r3.genderOptions).join(', ')}
+        - shopperIncome: ${Object.keys(r3.incomeOptions).join(', ')}
+        - shopperGeography: ${Object.keys(r3.geoOptions).join(', ')}
+        - shopperLifestyle: ${retailLifestyleOptionsStr}
+        - shoppingCompany: ${Object.keys(r3.q3_4.options).join(', ')}
+        - shoppingOccasion: ${r4.q4_2.options.join(', ')}
+        - desiredTone: ${r7.q7_1.options.tone.join(', ')}
+        - desiredWorld: ${r7.q7_1.options.world.join(', ')}
+        - storeAsPerson: ${r7.q7_2.options.join(', ')}
+        - adObjectives: ${r7.q7_3.options.join(', ')}
+        - adFocus: ${r7.q7_4.options.join(', ')}
+
+        For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
         `;
     } else {
       const t = formTranslations;
@@ -1400,13 +1457,21 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         'demographics.age',
         'psychographics', 'adObjectives', 'adFocus',
         'consumerAge', 'consumerIncome', 'consumerGeography', 'psychographicOrientation',
-        'desiredImageryAttributes'
+        'desiredImageryAttributes',
+        // Lifestyle
+        'customerAge', 'customerLifestyle', 'shoppingCompany', 'desiredAttributes',
+        // Retail
+        'shopperAge', 'shopperIncome', 'shopperGeography', 'shopperLifestyle', 'shoppingOccasion', 'primaryCategories'
       ];
 
       const singleFields = [
         'consumerDemographics.gender', 'demographics.gender',
         'desiredImageryTone', 'desiredImageryWorld', 'brandAsPerson', 'consumerViewPersona',
-        'consumerGender', 'customerInfluencerType'
+        'consumerGender', 'customerInfluencerType',
+        // Lifestyle
+        'customerGender', 'desiredTone', 'desiredWorld',
+        // Retail
+        'shopperGender', 'storeAsPerson'
       ];
 
       const objectFields = ['adObjectiveDetails', 'adFocusDetails'];
