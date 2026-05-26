@@ -25,6 +25,8 @@ const AudioTranscriptionManager = React.forwardRef<
     const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
     const [selectedMicId, setSelectedMicId] = useState<string>('');
     const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
+    const [isEditingTranscript, setIsEditingTranscript] = useState(false);
+    const [transcriptDraft, setTranscriptDraft] = useState('');
 
     const recRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -243,25 +245,62 @@ const AudioTranscriptionManager = React.forwardRef<
                 <div className="space-y-2">
                     <div className="flex justify-between items-center">
                         <label className="text-sm font-semibold text-neutral-800"><TranslatedText lang={lang} text={formTranslations.audio.transcriptTitle} /></label>
-                        <button type="button" onClick={() => setIsTranscriptModalOpen(true)} className="text-xs rounded-md px-2 py-1 bg-slate-200 hover:bg-slate-300"><TranslatedText lang={lang} text={formTranslations.audio.transcriptExpand} /></button>
+                        <div className="flex gap-2">
+                            {!isEditingTranscript && (
+                                <button type="button" onClick={() => { setTranscriptDraft(fullTranscript); setIsEditingTranscript(true); }} className="text-xs rounded-md px-2 py-1 bg-slate-200 hover:bg-slate-300">Edit</button>
+                            )}
+                            <button type="button" onClick={() => setIsTranscriptModalOpen(true)} className="text-xs rounded-md px-2 py-1 bg-slate-200 hover:bg-slate-300"><TranslatedText lang={lang} text={formTranslations.audio.transcriptExpand} /></button>
+                        </div>
                     </div>
-                    <div className="h-24 overflow-y-auto rounded-lg border bg-slate-50 p-3 text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap">
-                        {fullTranscript}
-                    </div>
+                    {isEditingTranscript ? (
+                        <>
+                            <textarea
+                                className="h-24 w-full overflow-y-auto rounded-lg border bg-white p-3 text-sm text-neutral-700 leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                                value={transcriptDraft}
+                                onChange={e => setTranscriptDraft(e.target.value)}
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button type="button" onClick={() => setIsEditingTranscript(false)} className="px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded-md hover:bg-slate-300">Cancel</button>
+                                <button type="button" onClick={() => { onTranscriptChange(transcriptDraft); setIsEditingTranscript(false); }} className="px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700">Save</button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="h-24 overflow-y-auto rounded-lg border bg-slate-50 p-3 text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap">
+                            {fullTranscript}
+                        </div>
+                    )}
                 </div>
             )}
             {isTranscriptModalOpen && (
                 <div className="modal-overlay">
                     <div className="bg-white p-4 rounded-lg shadow-xl max-w-2xl w-full flex flex-col max-h-[90vh]">
                         <h3 className="text-lg font-semibold mb-2"><TranslatedText lang={lang} text={formTranslations.audio.transcriptModalTitle} /></h3>
-                        <div className="overflow-y-auto flex-grow p-2 border rounded-md bg-slate-50 whitespace-pre-wrap">
-                            {fullTranscript}
-                        </div>
+                        {isEditingTranscript ? (
+                            <textarea
+                                className="flex-grow p-2 border rounded-md bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 text-sm text-neutral-700 leading-relaxed"
+                                value={transcriptDraft}
+                                onChange={e => setTranscriptDraft(e.target.value)}
+                            />
+                        ) : (
+                            <div className="overflow-y-auto flex-grow p-2 border rounded-md bg-slate-50 whitespace-pre-wrap">
+                                {fullTranscript}
+                            </div>
+                        )}
                         <div className="mt-4 flex justify-end gap-2">
-                            <button onClick={() => { handleCopy(fullTranscript); alert('Copied!'); }} className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700">
-                                <TranslatedText lang={lang} text={formTranslations.audio.copy} />
-                            </button>
-                            <button onClick={() => setIsTranscriptModalOpen(false)} className="px-4 py-2 bg-slate-200 rounded-md shadow hover:bg-slate-300">
+                            {isEditingTranscript ? (
+                                <>
+                                    <button onClick={() => setIsEditingTranscript(false)} className="px-4 py-2 bg-slate-200 rounded-md shadow hover:bg-slate-300 text-sm">Cancel</button>
+                                    <button onClick={() => { onTranscriptChange(transcriptDraft); setIsEditingTranscript(false); }} className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 text-sm">Save</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => { setTranscriptDraft(fullTranscript); setIsEditingTranscript(true); }} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md shadow hover:bg-slate-300 text-sm">Edit</button>
+                                    <button onClick={() => { handleCopy(fullTranscript); alert('Copied!'); }} className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700">
+                                        <TranslatedText lang={lang} text={formTranslations.audio.copy} />
+                                    </button>
+                                </>
+                            )}
+                            <button onClick={() => { setIsEditingTranscript(false); setIsTranscriptModalOpen(false); }} className="px-4 py-2 bg-slate-200 rounded-md shadow hover:bg-slate-300">
                                 <TranslatedText lang={lang} text={formTranslations.audio.transcriptClose} />
                             </button>
                         </div>
