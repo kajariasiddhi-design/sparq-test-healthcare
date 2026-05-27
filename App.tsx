@@ -1385,9 +1385,11 @@ function App() {
        `;
     }
 
-    const prompt = `Based on the following transcript of a conversation with a brand owner, please fill in the corresponding values for the following keys. The output MUST be a valid JSON object. Do not include any text before or after the JSON object.
+    const prompt = `You are a form-filling assistant. Based on the following transcript of a conversation with a brand owner, extract information and fill in values for ALL the JSON keys listed below. The output MUST be a valid JSON object. Do not include any text before or after the JSON object.
     
 ${optionsContext}
+
+For all remaining text-based keys not listed above, extract the most relevant information directly from the transcript. Provide a value for each key wherever the transcript contains relevant information. Do not skip text fields even if they are not in the constrained list above - if the transcript mentions something relevant to a key, fill it in. Return an empty string only if the transcript genuinely has no information for that key.
 
 Transcript:
 ---
