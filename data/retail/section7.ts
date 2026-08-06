@@ -33,6 +33,10 @@ export const section7 = {
       options: ["Range & Variety", "Value / Offers / Pricing", "Store Experience", "Brand Trust & Heritage", "Convenience / One-stop Shop", "Other"],
       placeholder: addTranslations("Describe what specifically about this should come out in the ad", "वर्णन करें कि विज्ञापन में विशेष रूप से इसके बारे में क्या सामने आना चाहिए", "விளம்பரத்தில் இதைப் பற்றி குறிப்பாக என்ன வர வேண்டும் என்பதை விவரிக்கவும்", "ప్రకటనలో దీని గురించి ప్రత్యేకంగా ఏమి రావాలో వివరించండి", "જાહેરાતમાં આના વિશે ખાસ કરીને શું બહાર આવવું જોઈએ તેનું વર્ણન કરો"),
     },
+    q7_language: {
+      text: addTranslations("Which language should the tagline / dialogues / voiceovers be in?", "टैगलाइन / डायलॉग / वॉइसओवर किस भाषा में होने चाहिए?", "டேக்லைன் / வசனங்கள் / குரல் நடை எந்த மொழியில் இருக்க வேண்டும்?", "ట్యాగ్‌లైన్ / సంభాషణలు / వాయిస్‌ఓవర్‌లు ఏ భాషలో ఉండాలి?", "ટેગલાઇન / સંવાદ / વૉઇસઓવર કઈ ભાષામાં હોવા જોઈએ?"),
+      placeholder: addTranslations("Please specify", "कृपया बताएं", "தயவுசெய்து குறிப்பிடவும்", "దయచేసి పేర్కొనండి", "કૃપા કરીને જણાવો"),
+    },
     q7_5: {
       text: addTranslations("Is there an ongoing offer, sale event, or festive campaign this ad should be tied to?", "क्या कोई चालू ऑफर, बिक्री कार्यक्रम या उत्सव अभियान है जिससे इस विज्ञापन को जोड़ा जाना चाहिए?", "இந்த விளம்பரத்துடன் இணைக்கப்பட வேண்டிய ஏதேனும் தற்போதைய சலுகை, விற்பனை நிகழ்வு அல்லது பண்டிகை பிரச்சாரம் உள்ளதா?", "ఈ ప్రకటనకు అనుసంధానించబడిన కొనసాగుతున్న ఆఫర్, విక్రయ ఈవెంట్ లేదా పండుగ ప్రచారం ఉందా?", "શું કોઈ ચાલુ ઓફર, સેલ ઈવેન્ટ અથવા ઉત્સવની ઝુંબેશ છે જેની સાથે આ જાહેરાત જોડાયેલી હોવી જોઈએ?"),
       options: {

@@ -760,6 +760,15 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </div>
                         </div>
                     </div>
+                    <div>
+                        <Label qIndex="7.6" lang={lang} text={section7.q7_language.text} className="mb-2" />
+                        <TextInput
+                            lang={lang}
+                            value={form.dialogueLanguage || ''}
+                            onChange={(val) => update('dialogueLanguage', val)}
+                            placeholder={section7.q7_language.placeholder}
+                        />
+                    </div>
                 </Section>
             )}
 

@@ -395,6 +395,10 @@ const IndustrialGoodsForm: React.FC<IndustrialGoodsFormProps> = ({
                             </div>
                         )}
                     </div>
+                    <div>
+                        <Label qIndex="6.6" text={industrialFormTranslations.section7.q7_language.text} lang={lang} />
+                        <TextInput value={form.dialogueLanguage || ''} onChange={v => update('dialogueLanguage', v)} placeholder={industrialFormTranslations.section7.q7_language.placeholder} lang={lang} />
+                    </div>
                 </div>
             </Section>
 

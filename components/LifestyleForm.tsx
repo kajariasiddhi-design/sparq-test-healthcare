@@ -840,6 +840,15 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             </div>
                         </div>
                     </div>
+                    <div>
+                        <Label qIndex="7.7" lang={lang} text={section7.q7_language.text} className="mb-2" />
+                        <TextInput
+                            lang={lang}
+                            value={form.dialogueLanguage || ''}
+                            onChange={(val) => update('dialogueLanguage', val)}
+                            placeholder={section7.q7_language.placeholder}
+                        />
+                    </div>
                 </Section>
             )}
 

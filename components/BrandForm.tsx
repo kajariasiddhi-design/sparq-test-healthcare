@@ -502,6 +502,10 @@ const BrandForm: React.FC<BrandFormProps> = ({
                             </p>
                         )}
                     </div>
+                    <div>
+                        <Label qIndex="7.5" text={formTranslations.section7.q7_language.text} lang={lang} />
+                        <TextInput value={form.dialogueLanguage || ''} onChange={v => update('dialogueLanguage', v)} placeholder={formTranslations.section7.q7_language.placeholder} lang={lang} />
+                    </div>
                 </div>
             </Section>
 

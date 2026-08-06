@@ -71,4 +71,8 @@ export const section7 = {
     showInfluencerQuestion: addTranslations("Is it important to show the influencer (contractor/architect/plumber/etc.) in the ad?", "Is it important to show the influencer (contractor/architect/plumber/etc.) in the ad?", "Is it important to show the influencer (contractor/architect/plumber/etc.) in the ad?", "Is it important to show the influencer (contractor/architect/plumber/etc.) in the ad?", "Is it important to show the influencer (contractor/architect/plumber/etc.) in the ad?"),
     yes: addTranslations("Yes", "हाँ", "ஆம்", "అవును", "હા"),
     no: addTranslations("No", "नहीं", "இல்லை", "కాదు", "ના"),
+    q7_language: {
+      text: addTranslations("Which language should the tagline / dialogues / voiceovers be in?", "टैगलाइन / डायलॉग / वॉइसओवर किस भाषा में होने चाहिए?", "டேக்லைன் / வசனங்கள் / குரல் நடை எந்த மொழியில் இருக்க வேண்டும்?", "ట్యాగ్‌లైన్ / సంభాషణలు / వాయిస్‌ఓవర్‌లు ఏ భాషలో ఉండాలి?", "ટેગલાઇન / સંવાદ / વૉઇસઓવર કઈ ભાષામાં હોવા જોઈએ?"),
+      placeholder: addTranslations("Please specify", "कृपया बताएं", "தயவுசெய்து குறிப்பிடவும்", "దయచేసి పేర్కొనండి", "કૃપા કરીને જણાવો"),
+    },
   };

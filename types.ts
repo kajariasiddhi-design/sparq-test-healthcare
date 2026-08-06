@@ -216,6 +216,7 @@ export interface NewFormData {
   adObjectiveDetails: { [key: string]: string };
   adFocus: string[];
   adFocusDetails: { [key: string]: string };
+  dialogueLanguage: string;
 
   // New field for transcript
   fullTranscript: string;
@@ -276,6 +277,7 @@ export interface IndustrialFormData {
   adObjectiveDetails: { [key: string]: string };
   adFocus: string[];
   adFocusDetails: { [key: string]: string };
+  dialogueLanguage: string;
 
   // Section 8
   packagingDetails: string;
@@ -349,6 +351,7 @@ export interface LifestyleFormData {
   featureStore: 'Yes' | 'No' | '';
   featureFounderEmployee: 'Yes' | 'No' | '';
   featureFounderEmployeeBrief?: string;
+  dialogueLanguage: string;
 
   storesListLink?: string;
 
@@ -414,6 +417,7 @@ export interface RetailFormData {
   adMessageDetails: { [key: string]: string };
   ongoingOffer: 'Yes' | 'No' | '';
   offerDetails?: string;
+  dialogueLanguage: string;
 
   storesListLink?: string;
   fullTranscript: string;

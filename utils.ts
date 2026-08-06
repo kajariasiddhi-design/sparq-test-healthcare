@@ -54,6 +54,7 @@ export const getInitialFormData = (): NewFormData => ({
     adObjectiveDetails: {},
     adFocus: [],
     adFocusDetails: {},
+    dialogueLanguage: "",
     fullTranscript: "",
 });
 
@@ -98,6 +99,7 @@ export const getInitialIndustrialFormData = (): IndustrialFormData => ({
     adObjectiveDetails: {},
     adFocus: [],
     adFocusDetails: {},
+    dialogueLanguage: "",
     packagingDetails: "",
     productAppearance: "",
     fullTranscript: "",
@@ -113,7 +115,7 @@ export const getInitialLifestyleFormData = (): LifestyleFormData => ({
     keyBenefits: "", competitorDifference: "", emotionalOutcome: "", emotionalOutcomeManual: "",
     competitors: "",
     desiredTone: "", desiredWorld: "", desiredAttributes: [], desiredAttributesOther: "", brandAsPerson: "", brandAsPersonOther: "",
-    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, featureStore: "", featureFounderEmployee: "", featureFounderEmployeeBrief: "",
+    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, featureStore: "", featureFounderEmployee: "", featureFounderEmployeeBrief: "", dialogueLanguage: "",
     fullTranscript: ""
 });
 
@@ -126,7 +128,7 @@ export const getInitialRetailFormData = (): RetailFormData => ({
     keyBenefits: "", competitorStandout: "", shopperFeel: "", shopperFeelManual: "",
     competitors: "",
     desiredTone: "", desiredWorld: "", storeAsPerson: "", storeAsPersonOther: "",
-    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, ongoingOffer: "", offerDetails: "",
+    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, ongoingOffer: "", offerDetails: "", dialogueLanguage: "",
     fullTranscript: ""
 });
 
@@ -221,6 +223,7 @@ export const transformDataForWebhook = (data: NewFormData, lang: Language, packI
         "Consumer's View of Brand Persona": `${getTextFromKey(formTranslations.section7.q7_2.options, data.consumerViewPersona)}${getOtherValue(data.consumerViewPersona, data.consumerViewPersonaOther)}`,
         "Ad Objectives": adObjectives,
         "Ad Focus (in order of priority)": adFocus,
+        "Dialogue Language": data.dialogueLanguage,
         "Session Transcript": data.fullTranscript,
     };
 
@@ -315,6 +318,7 @@ export const transformIndustrialDataForWebhook = (data: IndustrialFormData, lang
         "Ad Focus (in order of priority)": adFocus,
         // Flattened "Product Representation & Packaging"
         "Product Appearance Preference": data.productAppearance,
+        "Dialogue Language": data.dialogueLanguage,
         "Session Transcript": data.fullTranscript,
     };
 
@@ -370,6 +374,7 @@ export const transformLifestyleDataForWebhook = (data: LifestyleFormData, lang: 
         "Feature Founder/Employee": data.featureFounderEmployee === 'Yes' ? (data.featureFounderEmployeeBrief ? `Yes: ${data.featureFounderEmployeeBrief}` : 'Yes') : (data.featureFounderEmployee || ''),
         "Feature Store in Ad": data.featureStore,
         "Store Link": data.storesListLink || '',
+        "Dialogue Language": data.dialogueLanguage,
         "Session Transcript": data.fullTranscript,
     };
 };
@@ -416,6 +421,7 @@ export const transformRetailDataForWebhook = (data: RetailFormData, lang: Langua
         "Important Messages": data.adImportantMessages.map(m => `${m}: ${data.adMessageDetails[m] || ''}`),
         "Ongoing Offer Event": data.ongoingOffer === 'Yes' ? (data.offerDetails ? `Yes: ${data.offerDetails}` : 'Yes') : 'No',
         "Store Link": data.storesListLink || '',
+        "Dialogue Language": data.dialogueLanguage,
         "Session Transcript": data.fullTranscript,
     };
 };
@@ -635,6 +641,9 @@ export const mapRawDataToIndustrialFormData = (raw: any): IndustrialFormData => 
     formData.productPackForm = pfKey;
     formData.productPackFormOther = pfOther;
 
+    formData.dialogueLanguage = data["Dialogue Language"] || '';
+    formData.fullTranscript = data["Session Transcript"] || data["Transcript"] || '';
+
     return formData;
 };
 
@@ -817,6 +826,8 @@ export const mapRawDataToFormData = (raw: any): NewFormData => {
     formData.productPackForm = pfKey;
     formData.productPackFormOther = pfOther;
 
+    formData.dialogueLanguage = data["Dialogue Language"] || '';
+
     return formData;
 };
 
@@ -998,6 +1009,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     }
 
     formData.storesListLink = data["Store Link"] || '';
+    formData.dialogueLanguage = data["Dialogue Language"] || '';
     formData.fullTranscript = data["Session Transcript"] || data["Transcript"] || '';
 
     return formData;
@@ -1096,6 +1108,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.ongoingOffer = ongoingOfferRaw === 'No' || !ongoingOfferRaw ? 'No' : 'Yes';
     formData.offerDetails = ongoingOfferRaw && ongoingOfferRaw !== 'No' ? ongoingOfferRaw.replace(/^Yes:\s*/, '') : '';
     formData.storesListLink = data["Store Link"] || '';
+    formData.dialogueLanguage = data["Dialogue Language"] || '';
     formData.fullTranscript = data["Session Transcript"] || data["Transcript"] || '';
 
     return formData;
