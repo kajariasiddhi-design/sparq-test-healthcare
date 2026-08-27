@@ -44,6 +44,9 @@ export const REGIONS = [
   'Kerala',
   'Andhra Pradesh',
   'Telangana',
+  'West Bengal',
+  'Bihar',
+  'Madhya Pradesh - Chhattisgarh',
   'Others'
 ] as const;
 
@@ -52,9 +55,7 @@ export type Region = typeof REGIONS[number];
 export const REGION_SALESPERSONS: Record<Region, string[]> = {
   'North': [
     'Vishal Chaturvedi',
-    'Shivam Khanna',
-    'Manish Tiwary',
-    'Jitendra Joshi'
+    'Shivam Khanna'
   ],
   'Delhi': [
     'Mayank Sehgal',
@@ -71,9 +72,9 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Ritesh Rajpal',
     'Mohammad Saquib',
     'Mohammad Zain',
-    'Chethan Kishore M G',
     'Utapreksha Mahawar',
-    'Karthik C'
+    'Karthik C',
+    'Gaurav Gopinath Bantwal'
   ],
   'Maharashtra': [
     'Iman Kalyan Raha',
@@ -85,7 +86,9 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Kashyap Joshi',
     'Chaitanya Jadhav',
     'Keval Anil Mhatre',
-    'Vipin Shukla'
+    'Vipin Shukla',
+    'Poonam Singh',
+    'Shweta Sonawane'
   ],
   'Gujarat': [
     'Shaisang Maniar',
@@ -107,7 +110,8 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Naganathan Chandran',
     'SyedKhaja A',
     'Sathishkumar Rangasamy',
-    'Anuraag J Prakash'
+    'Anuraag J Prakash',
+    'Ratnaganth S'
   ],
   'Kerala': [
     'Manesh Mathew',
@@ -129,7 +133,8 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Katam Jambulaiah',
     'Ganesh Kumar Bera',
     'Rama Krishna Avala',
-    'Nallamilli Venkata Reddy'
+    'Nallamilli Venkata Reddy',
+    'Mahendra Madala'
   ],
   'Telangana': [
     'Abhishek Goel',
@@ -138,6 +143,16 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Anurag Verma',
     'Raja Satheesh',
     'Rohit Sharma'
+  ],
+  'West Bengal': [
+    'Manish Tiwary',
+    'Jitendra Joshi'
+  ],
+  'Bihar': [
+    'Shailendra Kumar Sah'
+  ],
+  'Madhya Pradesh - Chhattisgarh': [
+    'Harlin Mathew'
   ],
   'Others': [
     'Krithika Narayanan',
