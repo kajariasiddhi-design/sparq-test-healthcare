@@ -46,7 +46,8 @@ export const REGIONS = [
   'Telangana',
   'West Bengal',
   'Bihar',
-  'Madhya Pradesh - Chhattisgarh',
+  'Madhya Pradesh',
+  'Chhattisgarh',
   'Others'
 ] as const;
 
@@ -153,7 +154,10 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
   'Bihar': [
     'Shailendra Kumar Sah'
   ],
-  'Madhya Pradesh - Chhattisgarh': [
+  'Madhya Pradesh': [
+    'Harlin Mathew'
+  ],
+  'Chhattisgarh': [
     'Harlin Mathew'
   ],
   'Others': [
