@@ -55,7 +55,8 @@ export type Region = typeof REGIONS[number];
 export const REGION_SALESPERSONS: Record<Region, string[]> = {
   'North': [
     'Vishal Chaturvedi',
-    'Shivam Khanna'
+    'Shivam Khanna',
+    'Shiwani'
   ],
   'Delhi': [
     'Mayank Sehgal',
@@ -124,7 +125,8 @@ export const REGION_SALESPERSONS: Record<Region, string[]> = {
     'Abhinav K P',
     'Vipin',
     'Jijo Thankachan',
-    'Akshay'
+    'Akshay',
+    'Jithinlal P'
   ],
   'Andhra Pradesh': [
     'Ganesh Penneru',
