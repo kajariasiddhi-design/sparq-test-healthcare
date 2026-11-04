@@ -1,0 +1,292 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0b89d5b0-3562-4155-b245-96c8ca72956e",
+              "name": "Action",
+              "value": "={{ $('Webhook').item.json.body.action }}",
+              "type": "string"
+            },
+            {
+              "id": "aa9c56ea-56b5-46d6-8e13-01f176e80fab",
+              "name": "Datetime",
+              "value": "={{ $now.format('dd-MMM-yyyy : t') }}",
+              "type": "string"
+            },
+            {
+              "id": "c8191317-993f-4ff9-a390-96f692ff0e41",
+              "name": "Execution ID",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "50ec0802-fa6b-40d4-98b9-466535f59bb1",
+              "name": "App Session ID",
+              "value": "={{ $('Webhook').item.json.body.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "6df2dc57-fec7-4871-b6fb-258d07318f6b",
+              "name": "Salesperson",
+              "value": "={{ $('Webhook').item.json.body.form_data.Salesperson }}",
+              "type": "string"
+            },
+            {
+              "id": "ddf8a069-45c8-4a57-b990-49f892b3808e",
+              "name": "Salesperson Region",
+              "value": "={{ $('Webhook').item.json.body.form_data.Region }}",
+              "type": "string"
+            },
+            {
+              "id": "2da5e76e-cda9-460d-8fbe-b80cc0c61424",
+              "name": "Customer ID",
+              "value": "={{ $('Webhook').item.json.body.form_data['Customer ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0851e773-304c-48be-b9aa-d0ec027f32bf",
+              "name": "Category",
+              "value": "={{ $('Webhook').item.json.body.form_data.category }}",
+              "type": "string"
+            },
+            {
+              "id": "d26e29f9-3b79-4b93-bdf1-fb0d8bf54b26",
+              "name": "Brand Name",
+              "value": "={{ $('Webhook').item.json.body.form_data['Hospital Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "c0195eef-0c31-4507-97c3-43cf598621a7",
+              "name": "Ad Brand",
+              "value": "={{ $('Webhook').item.json.body.form_data['Hospital Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "d3a5dda1-c355-4ce3-9efb-961135800a40",
+              "name": "Hospital's Special Qualities",
+              "value": "={{ $('Webhook').item.json.body.form_data[\"Hospital's Special Qualities\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7a300ea7-090c-4293-94eb-e717bb185117",
+              "name": "Hospital / Clinic Count and Regions",
+              "value": "={{ $('Webhook').item.json.body.form_data['Hospital / Clinic Count and Regions'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1ec9cf3b-b704-44df-a7c9-34967d5e5956",
+              "name": "Primary Specialties / Medical Services",
+              "value": "={{ $('Webhook').item.json.body.form_data['Primary Specialties / Medical Services'] }}",
+              "type": "string"
+            },
+            {
+              "id": "13f1809e-d727-47b3-b7fc-97dd0a8826f6",
+              "name": "Founded",
+              "value": "={{ $('Webhook').item.json.body.form_data.Founded }}",
+              "type": "string"
+            },
+            {
+              "id": "2699f8e0-76dd-4587-a17a-2469e106ecf1",
+              "name": "Ailments / Specialties Offered",
+              "value": "={{ $('Webhook').item.json.body.form_data['Ailments / Specialties Offered'] }}",
+              "type": "string"
+            },
+            {
+              "id": "d00cbb13-886d-4212-9915-857050d468e8",
+              "name": "Popular Doctors",
+              "value": "={{ $('Webhook').item.json.body.form_data['Popular Doctors'] }}",
+              "type": "string"
+            },
+            {
+              "id": "874ae7e6-4879-457d-b681-5e51be74376b",
+              "name": "Technology Used",
+              "value": "={{ $('Webhook').item.json.body.form_data['Technology Used'] }}",
+              "type": "string"
+            },
+            {
+              "id": "f249e5dc-cffc-4846-bd22-cab5bf228334",
+              "name": "Value / Pricing",
+              "value": "={{ $('Webhook').item.json.body.form_data['Value / Pricing'] }}",
+              "type": "string"
+            },
+            {
+              "id": "75f1f146-6ef2-4a0d-ba05-43a1b20c2ad7",
+              "name": "Time Taken in Diagnosis",
+              "value": "={{ $('Webhook').item.json.body.form_data['Time Taken in Diagnosis'] }}",
+              "type": "string"
+            },
+            {
+              "id": "95e0fd20-0d81-4524-939e-a1455853ab4c",
+              "name": "Service / Trust",
+              "value": "={{ $('Webhook').item.json.body.form_data['Service / Trust'] }}",
+              "type": "string"
+            },
+            {
+              "id": "ee93f54b-e432-4712-8563-97d2cc646849",
+              "name": "Special Others",
+              "value": "={{ $('Webhook').item.json.body.form_data['Others'] }}",
+              "type": "string"
+            },
+            {
+              "id": "f0f059b3-65db-45f4-b512-138bf6ae6ffa",
+              "name": "Recognitions",
+              "value": "={{ $('Webhook').item.json.body.form_data.Recognitions }}",
+              "type": "string"
+            },
+            {
+              "id": "96cc1677-6f17-45ad-a16f-d4cacca3d6ee",
+              "name": "Patient - Age",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient - Age'] }}",
+              "type": "string"
+            },
+            {
+              "id": "7124f422-e432-4973-aaab-951ae4c11ec6",
+              "name": "Patient - Gender",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient - Gender'] }}",
+              "type": "string"
+            },
+            {
+              "id": "5342ecce-3a87-4f41-a695-e9d1b0724e69",
+              "name": "Patient - Income",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient - Income'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0b1728d2-2709-4670-bc1f-a2f8499719bc",
+              "name": "Patient - Comes From",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient - Comes From'] }}",
+              "type": "string"
+            },
+            {
+              "id": "97efef31-8c94-4e13-8ab1-26688fd01931",
+              "name": "Patient - Geography",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient - Geography'] }}",
+              "type": "string"
+            },
+            {
+              "id": "42a6ecd6-61de-4811-ba6c-cfe7143234ad",
+              "name": "Other Customer Segment",
+              "value": "={{ $('Webhook').item.json.body.form_data['Other Customer Segment'] }}",
+              "type": "string"
+            },
+            {
+              "id": "953982de-30c6-4e31-8d31-3d9c2e5f89c1",
+              "name": "Main Treatments",
+              "value": "={{ $('Webhook').item.json.body.form_data['Main Treatments'] }}",
+              "type": "string"
+            },
+            {
+              "id": "77c82a6e-f354-4b1e-b3e6-a148dc557420",
+              "name": "Decision Maker Lifestyle",
+              "value": "={{ $('Webhook').item.json.body.form_data['Decision Maker Lifestyle'] }}",
+              "type": "string"
+            },
+            {
+              "id": "95dbacc4-da11-4466-9b43-639451a47104",
+              "name": "Accompanied By",
+              "value": "={{ $('Webhook').item.json.body.form_data['Accompanied By'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a96313a2-d394-4c0c-a790-871f0043445d",
+              "name": "Key Benefits Offered",
+              "value": "={{ $('Webhook').item.json.body.form_data['Key Benefits Offered'] }}",
+              "type": "string"
+            },
+            {
+              "id": "8f1e05a9-4243-457d-a207-909a8fb36651",
+              "name": "Competitor Standout Benefits",
+              "value": "={{ $('Webhook').item.json.body.form_data['Competitor Standout Benefits'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a9e2785d-4d9e-45a2-bb75-d8166c23e710",
+              "name": "Patient Feel Post Visit",
+              "value": "={{ $('Webhook').item.json.body.form_data['Patient Feel Post Visit'] }}",
+              "type": "string"
+            },
+            {
+              "id": "84160f9d-3578-451d-8c19-7cb48969f027",
+              "name": "Primary Competitors",
+              "value": "={{ $('Webhook').item.json.body.form_data['Primary Competitors'] }}",
+              "type": "string"
+            },
+            {
+              "id": "63f60147-a8d1-4e48-91b3-e8fe3414e750",
+              "name": "Desired Brand Tone",
+              "value": "={{ $('Webhook').item.json.body.form_data['Desired Brand Tone'] }}",
+              "type": "string"
+            },
+            {
+              "id": "95c53dd1-dceb-44fe-ad86-27748433a953",
+              "name": "Desired Brand World",
+              "value": "={{ $('Webhook').item.json.body.form_data['Desired Brand World'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a8b04c2e-dfcb-4d06-a208-64cce6c74d0e",
+              "name": "Hospital Persona",
+              "value": "={{ $('Webhook').item.json.body.form_data['Hospital Persona'] }}",
+              "type": "string"
+            },
+            {
+              "id": "93b0d71f-e385-4457-a45d-6c875b570aec",
+              "name": "Ad Objectives",
+              "value": "={{ $('Webhook').item.json.body.form_data['Ad Objectives'] }}",
+              "type": "string"
+            },
+            {
+              "id": "07ae0fd9-0fed-4e6d-bf31-a36b88b192be",
+              "name": "Important Messages",
+              "value": "={{ $('Webhook').item.json.body.form_data['Important Messages'] }}",
+              "type": "string"
+            },
+            {
+              "id": "6135986d-b264-4e94-8ac2-077b397eccfd",
+              "name": "Hospital List Link",
+              "value": "={{ $('Webhook').item.json.body.form_data['Hospital List Link'] }}",
+              "type": "string"
+            },
+            {
+              "id": "83d8131c-1a09-4ae9-84a4-b3503a3ac658",
+              "name": "Dialogue Language",
+              "value": "={{ $('Webhook').item.json.body.form_data['Dialogue Language'] }}",
+              "type": "string"
+            },
+            {
+              "id": "7a4b3328-3bac-4b55-8799-2dd1cc5a520a",
+              "name": "Transcript",
+              "value": "={{ $('Webhook').item.json.body.form_data['Session Transcript'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0f696caf-8ae1-4e89-a773-dfe8ddb3ee56",
+              "name": "language",
+              "value": "={{ $('Webhook').item.json.body.form_data.language }}",
+              "type": "string"
+            },
+            {
+              "id": "ed6d19ea-542d-4046-ac29-3b3d192b481f",
+              "name": "image_only_mode",
+              "value": "={{ $('Webhook').item.json.body.form_data.image_only_mode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e7222324-9cbe-49c1-bbd7-8c61d7fd1186",
+      "name": "Set Healthcare Values"
+    }
+  ],
+  "connections": {}
+}

@@ -423,6 +423,66 @@ export interface RetailFormData {
   fullTranscript: string;
 }
 
+export interface HealthcareFormData {
+  customerID?: string;
+  salesperson: string;
+
+  // Section 1: Hospitals / healthcare service Showcase
+  brandSpecial: string;
+  hospitalName: string;
+  facilityCountRegions: string;
+  primarySpecialties: string;
+
+  // Section 2: Origin & Heritage
+  founder: string;
+  foundedYear: string;
+  specialAilments: string;
+  specialDoctors: string;
+  specialTechnology: string;
+  specialValue: string;
+  specialDiagnosisTime: string;
+  specialService: string;
+  specialOthers?: string;
+  recognitions: string;
+
+  // Section 3: Target Audience
+  patientAge: string[];
+  patientGender: string;
+  patientIncome: string[];
+  patientOrigin: string[];
+  patientGeography: string[];
+  otherCustomerSegment?: 'No other segments' | 'Kids' | 'Others' | '';
+  otherCustomerSegmentBrief?: string;
+  specialtyScope: 'Multi-specialty' | 'Single / select specialties or clinics' | '';
+  treatments: string[];
+  treatmentsOther?: string;
+  decisionMakerLifestyle: string[];
+  companions: string[];
+  companionsOther?: string;
+
+  // Section 4: Benefit & Experience
+  keyBenefits: string;
+  competitorStandout: string;
+  patientFeel: string;
+
+  // Section 5: Competition
+  competitors: string;
+
+  // Section 6: Desired Perception
+  desiredTone: string;
+  desiredWorld: string;
+  hospitalAsPerson: string;
+  hospitalAsPersonOther?: string;
+  adObjectives: string[];
+  adObjectiveDetails: { [key: string]: string };
+  adImportantMessages: string[];
+  adMessageDetails: { [key: string]: string };
+  dialogueLanguage: string;
+
+  facilityListLink?: string;
+  fullTranscript: string;
+}
+
 export interface TranscribedClip {
   id: string;
   name: string; // This will be the AI-generated summary
@@ -500,6 +560,20 @@ export type RetailFormSuggestions = {
   'shopperAge'?: string | string[];
   'shopperLifestyle'?: string | string[];
   'shoppingOccasion'?: string | string[];
+  'adObjectives'?: string | string[];
+  'adImportantMessages'?: string | string[];
+};
+
+export type HealthcareFormSuggestions = {
+  [key in keyof Omit<HealthcareFormData, 'patientAge' | 'patientIncome' | 'patientOrigin' | 'patientGeography' | 'treatments' | 'decisionMakerLifestyle' | 'companions' | 'adObjectives' | 'adImportantMessages'>]?: string
+} & {
+  'patientAge'?: string | string[];
+  'patientIncome'?: string | string[];
+  'patientOrigin'?: string | string[];
+  'patientGeography'?: string | string[];
+  'treatments'?: string | string[];
+  'decisionMakerLifestyle'?: string | string[];
+  'companions'?: string | string[];
   'adObjectives'?: string | string[];
   'adImportantMessages'?: string | string[];
 };

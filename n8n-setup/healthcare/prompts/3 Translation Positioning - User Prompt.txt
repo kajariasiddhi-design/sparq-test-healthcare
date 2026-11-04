@@ -1,0 +1,44 @@
+Hospital / Healthcare Service Name: {{ $('Set Healthcare Values').item.json['Brand Name'] }}
+Primary Specialties / Medical Services: {{ $('Set Healthcare Values').item.json['Primary Specialties / Medical Services'] }}
+Hospital's Special Qualities: {{ $('Set Healthcare Values').item.json["Hospital's Special Qualities"] }}
+
+Physique + Roots / Heritage:
+Founded / Origin (Founder, Year): {{ $('Set Healthcare Values').item.json['Founded'] }}
+Hospital / Clinic Count and Regions: {{ $('Set Healthcare Values').item.json['Hospital / Clinic Count and Regions'] }}
+Ailments / Specialties Offered: {{ $('Set Healthcare Values').item.json['Ailments / Specialties Offered'] }}
+Popular Doctors: {{ $('Set Healthcare Values').item.json['Popular Doctors'] }}
+Technology Used: {{ $('Set Healthcare Values').item.json['Technology Used'] }}
+Value / Pricing: {{ $('Set Healthcare Values').item.json['Value / Pricing'] }}
+Time Taken in Diagnosis: {{ $('Set Healthcare Values').item.json['Time Taken in Diagnosis'] }}
+Service / Trust: {{ $('Set Healthcare Values').item.json['Service / Trust'] }}
+Other Special Aspects: {{ $('Set Healthcare Values').item.json['Special Others'] }}
+Recognitions / Certifications: {{ $('Set Healthcare Values').item.json['Recognitions'] }}
+
+Target Audience (Patients + Decision Makers):
+Patient – Age: {{ $('Set Healthcare Values').item.json['Patient - Age'] }}
+Patient – Gender: {{ $('Set Healthcare Values').item.json['Patient - Gender'] }}
+Patient – Income: {{ $('Set Healthcare Values').item.json['Patient - Income'] }}
+Patient – Geography: {{ $('Set Healthcare Values').item.json['Patient - Geography'] }}
+Where Most Patients Come From: {{ $('Set Healthcare Values').item.json['Patient - Comes From'] }}
+Other Customer Segment: {{ $('Set Healthcare Values').item.json['Other Customer Segment'] }}
+Main Treatments Patients Come For: {{ $('Set Healthcare Values').item.json['Main Treatments'] }}
+Decision Makers' Lifestyle & Beliefs: {{ $('Set Healthcare Values').item.json['Decision Maker Lifestyle'] }}
+Who Usually Accompanies the Patient: {{ $('Set Healthcare Values').item.json['Accompanied By'] }}
+
+Functional Benefit + RTBs + Emotional Payoff:
+Key Benefits Offered: {{ $('Set Healthcare Values').item.json['Key Benefits Offered'] }}
+Benefits That Stand Out vs Competitors: {{ $('Set Healthcare Values').item.json['Competitor Standout Benefits'] }}
+Emotional Payoff (How the Patient Feels After a Visit): {{ $('Set Healthcare Values').item.json['Patient Feel Post Visit'] }}
+
+Competitive Context (never name these in the output):
+Primary Competitors: {{ $('Set Healthcare Values').item.json['Primary Competitors'] }}
+
+Personality + Relationship Goal:
+Desired Brand Tone: {{ $('Set Healthcare Values').item.json['Desired Brand Tone'] }}
+Desired Brand World: {{ $('Set Healthcare Values').item.json['Desired Brand World'] }}
+Patients' View of the Hospital as a Person: {{ $('Set Healthcare Values').item.json['Hospital Persona'] }}
+Advertising Objective: {{ $('Set Healthcare Values').item.json['Ad Objectives'] }}
+Most Important Things the Ad Should Communicate: {{ $('Set Healthcare Values').item.json['Important Messages'] }}
+
+
+Generate it in preferred language code "{{ $('Webhook').item.json.body.form_data.language }}" and in English as well. Do not include "\n" in your output for new line characters.

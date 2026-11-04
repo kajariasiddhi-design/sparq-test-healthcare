@@ -22,8 +22,9 @@ import { section7 as lifestyleSection7 } from './data/lifestyle/section7';
 import { section3 as retailSection3 } from './data/retail/section3';
 import { section4 as retailSection4 } from './data/retail/section4';
 import { section7 as retailSection7 } from './data/retail/section7';
+import { healthcareFormTranslations } from './data/healthcareTranslations';
 import { NEW_SAMPLE_PROFILES } from './data/sampleProfiles';
-import { NewFormData, UploadedImage, BrandDescriptionResponse, FormSuggestions, IndustrialFormSuggestions, AdPillar, Story, Language, PastSubmission, Frame, TranscribedClip, MultilingualText, IndustrialFormData, World, LifestyleFormData, RetailFormData } from './types';
+import { NewFormData, UploadedImage, BrandDescriptionResponse, FormSuggestions, IndustrialFormSuggestions, AdPillar, Story, Language, PastSubmission, Frame, TranscribedClip, MultilingualText, IndustrialFormData, World, LifestyleFormData, RetailFormData, HealthcareFormData } from './types';
 import {
   getInitialFormData,
   transformDataForWebhook,
@@ -33,9 +34,11 @@ import {
    getInitialIndustrialFormData,
    getInitialLifestyleFormData,
    getInitialRetailFormData,
+   getInitialHealthcareFormData,
    transformIndustrialDataForWebhook,
   transformLifestyleDataForWebhook,
   transformRetailDataForWebhook,
+  transformHealthcareDataForWebhook,
   mapRawDataToLifestyleFormData,
   mapRawDataToRetailFormData,
   inferCategory,
@@ -55,6 +58,7 @@ import BrandForm from './components/BrandForm.tsx';
 import IndustrialGoodsForm from './components/QuestionRenderer.tsx';
 import LifestyleForm from './components/LifestyleForm.tsx';
 import RetailForm from './components/RetailForm.tsx';
+import HealthcareForm from './components/HealthcareForm.tsx';
 import PositioningStatement from './components/PositioningStatement.tsx';
 import AdCreative from './components/AdCreative.tsx';
 import { TranslatedText, Chip } from './components/FormElements.tsx';
@@ -120,7 +124,7 @@ function App() {
 
   const [lang, setLang] = useState<Language>(() => loadFromStorage('sparq_lang', 'en'));
   const [webhookEnv, setWebhookEnv] = useState<'prod' | 'test'>(() => loadFromStorage('sparq_webhookEnv', 'prod'));
-  const [category, setCategory] = useState<'fmcg' | 'industrial' | 'lifestyle' | 'retail' | null>(() => loadFromStorage('sparq_category', null));
+  const [category, setCategory] = useState<'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' | null>(() => loadFromStorage('sparq_category', null));
 
   // Region and Salesperson selection (mandatory before category selection)
   const [selectedRegion, setSelectedRegion] = useState<Region | ''>(() => loadFromStorage('sparq_selectedRegion', ''));
@@ -130,11 +134,13 @@ function App() {
   const [industrialForm, setIndustrialForm] = useState<IndustrialFormData>(() => loadFromStorage('sparq_industrialForm', getInitialIndustrialFormData()));
   const [lifestyleForm, setLifestyleForm] = useState<LifestyleFormData>(() => loadFromStorage('sparq_lifestyleForm', getInitialLifestyleFormData()));
   const [retailForm, setRetailForm] = useState<RetailFormData>(() => loadFromStorage('sparq_retailForm', getInitialRetailFormData()));
+  const [healthcareForm, setHealthcareForm] = useState<HealthcareFormData>(() => loadFromStorage('sparq_healthcareForm', getInitialHealthcareFormData()));
 
   const [fmcgPackImages, setFmcgPackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_fmcgPackImages', []));
   const [industrialPackImages, setIndustrialPackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_industrialPackImages', []));
   const [lifestylePackImages, setLifestylePackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_lifestylePackImages', []));
   const [retailPackImages, setRetailPackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_retailPackImages', []));
+  const [healthcarePackImages, setHealthcarePackImages] = useState<UploadedImage[]>(() => loadFromStorage('sparq_healthcarePackImages', []));
 
   const [initialWorlds] = useState<World[]>(() => loadFromStorage('sparq_worlds', []));
   const [initialSelectedWorld] = useState<string | null>(() => loadFromStorage('sparq_selectedWorld', null));
@@ -236,6 +242,8 @@ function App() {
       data = transformLifestyleDataForWebhook(lifestyleForm, lang, lifestylePackImages, 'lifestyle', isImageBased);
     } else if (category === 'retail') {
       data = transformRetailDataForWebhook(retailForm, lang, retailPackImages, 'retail', isImageBased);
+    } else if (category === 'healthcare') {
+      data = transformHealthcareDataForWebhook(healthcareForm, lang, healthcarePackImages, 'healthcare', isImageBased);
     }
     return {
       ...data,
@@ -246,7 +254,7 @@ function App() {
       "app_session_id": sessionId,
       "image_only_mode": isImageBased ? "yes" : "no",
     };
-  }, [category, lang, fmcgForm, industrialForm, lifestyleForm, retailForm, fmcgPackImages, industrialPackImages, lifestylePackImages, retailPackImages, selectedSalesperson, selectedRegion, sessionId, isImageBased]);
+  }, [category, lang, fmcgForm, industrialForm, lifestyleForm, retailForm, healthcareForm, fmcgPackImages, industrialPackImages, lifestylePackImages, retailPackImages, healthcarePackImages, selectedSalesperson, selectedRegion, sessionId, isImageBased]);
 
   const {
     worlds,
@@ -393,6 +401,10 @@ function App() {
   }, [retailForm]);
 
   useEffect(() => {
+    localStorage.setItem('sparq_healthcareForm', JSON.stringify(healthcareForm));
+  }, [healthcareForm]);
+
+  useEffect(() => {
     localStorage.setItem('sparq_fmcgPackImages', JSON.stringify(fmcgPackImages));
   }, [fmcgPackImages]);
 
@@ -420,6 +432,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('sparq_retailPackImages', JSON.stringify(retailPackImages));
   }, [retailPackImages]);
+
+  useEffect(() => {
+    localStorage.setItem('sparq_healthcarePackImages', JSON.stringify(healthcarePackImages));
+  }, [healthcarePackImages]);
 
   useEffect(() => {
     localStorage.setItem('sparq_sessionId', JSON.stringify(sessionId));
@@ -490,10 +506,12 @@ function App() {
     setIndustrialForm(getInitialIndustrialFormData());
     setLifestyleForm(getInitialLifestyleFormData());
     setRetailForm(getInitialRetailFormData());
+    setHealthcareForm(getInitialHealthcareFormData());
     setFmcgPackImages([]);
     setIndustrialPackImages([]);
     setLifestylePackImages([]);
     setRetailPackImages([]);
+    setHealthcarePackImages([]);
     setBrandDescriptionResponse(null);
     setAdPillars([]);
     setIsEditingPositioning(false);
@@ -575,6 +593,24 @@ function App() {
 
   const updateRetailForm = useCallback((path: string | string[], value: any) => {
     setRetailForm((f: any) => {
+      const keys = Array.isArray(path) ? path : path.split(".");
+      const oldVal = keys.reduce((acc: any, key: any) => acc?.[key], f as any);
+      const finalValue = typeof value === 'function' ? value(oldVal) : value;
+      const copy = structuredClone(f);
+      let cur: any = copy;
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (cur[keys[i]] === undefined || cur[keys[i]] === null) {
+          cur[keys[i]] = {};
+        }
+        cur = cur[keys[i]];
+      }
+      cur[keys[keys.length - 1]] = finalValue;
+      return copy;
+    });
+  }, []);
+
+  const updateHealthcareForm = useCallback((path: string | string[], value: any) => {
+    setHealthcareForm((f: any) => {
       const keys = Array.isArray(path) ? path : path.split(".");
       const oldVal = keys.reduce((acc: any, key: any) => acc?.[key], f as any);
       const finalValue = typeof value === 'function' ? value(oldVal) : value;
@@ -883,7 +919,8 @@ function App() {
         category === 'fmcg' ? !fmcgForm.brandName :
         category === 'industrial' ? !industrialForm.adBrand :
         category === 'lifestyle' ? !lifestyleForm.brands :
-        category === 'retail' ? !retailForm.storeName : 
+        category === 'retail' ? !retailForm.storeName :
+        category === 'healthcare' ? !healthcareForm.hospitalName :
         false;
 
       if (isMissing1_2) {
@@ -923,7 +960,7 @@ function App() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [category, fmcgForm, industrialForm, lifestyleForm, retailForm, fmcgPackImages, industrialPackImages, lang, sendToWebhook, transcribedClips, selectedSalesperson, selectedRegion, isImageBased, getFullContext]);
+  }, [category, fmcgForm, industrialForm, lifestyleForm, retailForm, healthcareForm, fmcgPackImages, industrialPackImages, lang, sendToWebhook, transcribedClips, selectedSalesperson, selectedRegion, isImageBased, getFullContext]);
 
 
 
@@ -1152,6 +1189,8 @@ function App() {
           updateLifestyleForm(parentKey as any, updateFn);
         } else if (category === 'retail') {
           updateRetailForm(parentKey as any, updateFn);
+        } else if (category === 'healthcare') {
+          updateHealthcareForm(parentKey as any, updateFn);
         }
         return;
       }
@@ -1164,10 +1203,12 @@ function App() {
         updateLifestyleForm(key, value);
       } else if (category === 'retail') {
         updateRetailForm(key, value);
+      } else if (category === 'healthcare') {
+        updateHealthcareForm(key, value);
       }
     });
     setSuggestions({});
-  }, [category, suggestions, updateFmcgForm, updateIndustrialForm, updateLifestyleForm, updateRetailForm]);
+  }, [category, suggestions, updateFmcgForm, updateIndustrialForm, updateLifestyleForm, updateRetailForm, updateHealthcareForm]);
 
   const handleExportPDFAction = async () => {
     setIsExportingPdf(true);
@@ -1179,8 +1220,9 @@ function App() {
         category === 'industrial' ? industrialForm :
         category === 'lifestyle' ? lifestyleForm :
         category === 'retail' ? retailForm :
+        category === 'healthcare' ? healthcareForm :
         fmcgForm;
-      const brandName = (activeForm as any).brandName || (activeForm as any).adBrand || (activeForm as any).brands || (activeForm as any).storeName || 'Brand';
+      const brandName = (activeForm as any).brandName || (activeForm as any).adBrand || (activeForm as any).brands || (activeForm as any).storeName || (activeForm as any).hospitalName || 'Brand';
       // Use editable positioning if available, otherwise from response
       const pos = editablePositioning || brandDescriptionResponse?.positioning;
 
@@ -1226,6 +1268,7 @@ function App() {
        category === 'industrial' ? industrialForm.adBrand : 
        category === 'lifestyle' ? lifestyleForm.brands :
        category === 'retail' ? retailForm.storeName :
+       category === 'healthcare' ? healthcareForm.hospitalName :
        '') || 'Untitled Brand';
 
     exportStoryBriefPDF(
@@ -1247,6 +1290,7 @@ function App() {
       category === 'industrial' ? industrialForm.fullTranscript :
       category === 'lifestyle' ? lifestyleForm.fullTranscript :
       category === 'retail' ? retailForm.fullTranscript :
+      category === 'healthcare' ? healthcareForm.fullTranscript :
       '';
     if (!transcript || transcript.trim().length < 10) {
       setError("Transcript is too short to analyze.");
@@ -1259,6 +1303,7 @@ function App() {
       category === 'industrial' ? getInitialIndustrialFormData() :
       category === 'lifestyle' ? getInitialLifestyleFormData() :
       category === 'retail' ? getInitialRetailFormData() :
+      category === 'healthcare' ? getInitialHealthcareFormData() :
       {};
     // We exclude some keys, but for Industrial we want to include option-based keys now
     const alwaysExcluded = ['fullTranscript', 'customerID', 'salesperson', 'notable'];
@@ -1291,6 +1336,8 @@ function App() {
     } else if (category === 'retail') {
       relevantKeys = relevantKeys.filter(k => !['shopperFeelManual', 'adMessageDetails', 'shoppingCompanyOther', 'otherCustomerSegmentBrief'].includes(k));
       relevantKeys.push('adObjectiveDetails');
+    } else if (category === 'healthcare') {
+      relevantKeys = relevantKeys.filter(k => !['adMessageDetails', 'companionsOther', 'otherCustomerSegmentBrief', 'treatmentsOther', 'facilityListLink'].includes(k));
     }
 
     let optionsContext = "";
@@ -1355,6 +1402,29 @@ function App() {
         - storeAsPerson: ${r7.q7_2.options.join(', ')}
         - adObjectives: ${r7.q7_3.options.join(', ')}
         - adFocus: ${r7.q7_4.options.join(', ')}
+
+        For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
+        `;
+    } else if (category === 'healthcare') {
+      const h3 = healthcareFormTranslations.section3;
+      const h6 = healthcareFormTranslations.section6;
+      optionsContext = `
+        For the following keys, you MUST choose from the provided IDs/Values based on the transcript. If multiple apply and the field accepts arrays, provide an array.
+        - patientAge: ${Object.keys(h3.ageOptions).join(', ')}
+        - patientGender: ${Object.keys(h3.genderOptions).join(', ')}
+        - patientIncome: ${Object.keys(h3.incomeOptions).join(', ')}
+        - patientOrigin: ${Object.keys(h3.originOptions).join(', ')}
+        - patientGeography: ${Object.keys(h3.geoOptions).join(', ')}
+        - otherCustomerSegment: ${Object.keys(h3.q3B.options).join(', ')}
+        - specialtyScope: ${Object.keys(h3.q3_2.scopeOptions).join(', ')}
+        - treatments: ${Object.keys(h3.q3_2.options).join(', ')}
+        - decisionMakerLifestyle (up to 3): ${h3.q3_3.options.map(o => o.value).join(' | ')}
+        - companions: ${Object.keys(h3.q3_4.options).join(', ')}
+        - desiredTone: ${h6.q6_1.options.tone.join(', ')}
+        - desiredWorld: ${h6.q6_1.options.world.join(', ')}
+        - hospitalAsPerson: ${h6.q6_2.options.join(', ')}
+        - adObjectives: ${h6.q6_3.options.join(', ')}
+        - adImportantMessages: ${h6.q6_4.options.join(', ')}
 
         For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
         `;
@@ -1463,7 +1533,9 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         // Lifestyle
         'customerAge', 'customerLifestyle', 'shoppingCompany', 'desiredAttributes',
         // Retail
-        'shopperAge', 'shopperIncome', 'shopperGeography', 'shopperLifestyle', 'shoppingOccasion', 'primaryCategories'
+        'shopperAge', 'shopperIncome', 'shopperGeography', 'shopperLifestyle', 'shoppingOccasion', 'primaryCategories',
+        // Healthcare
+        'patientAge', 'patientIncome', 'patientOrigin', 'patientGeography', 'treatments', 'decisionMakerLifestyle', 'companions', 'adImportantMessages'
       ];
 
       const singleFields = [
@@ -1473,7 +1545,9 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         // Lifestyle
         'customerGender', 'desiredTone', 'desiredWorld',
         // Retail
-        'shopperGender', 'storeAsPerson'
+        'shopperGender', 'storeAsPerson',
+        // Healthcare
+        'patientGender', 'hospitalAsPerson', 'specialtyScope', 'otherCustomerSegment'
       ];
 
       const objectFields = ['adObjectiveDetails', 'adFocusDetails'];
@@ -1496,7 +1570,7 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
     } finally {
       setIsAnalyzing(false);
     }
-  }, [category, fmcgForm.fullTranscript, industrialForm.fullTranscript, lifestyleForm.fullTranscript, retailForm.fullTranscript]);
+  }, [category, fmcgForm.fullTranscript, industrialForm.fullTranscript, lifestyleForm.fullTranscript, retailForm.fullTranscript, healthcareForm.fullTranscript]);
 
 
   return (
@@ -1647,6 +1721,13 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
               >
                 Organised Retail
               </button>
+              <button
+                onClick={() => setCategory('healthcare')}
+                disabled={!selectedRegion || !selectedSalesperson}
+                className="inline-flex justify-center items-center px-8 py-4 border border-red-700 text-base font-medium rounded-md shadow-sm text-red-700 bg-white hover:bg-red-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-red-700"
+              >
+                Healthcare and Hospitals
+              </button>
             </div>
           </div>
 
@@ -1748,6 +1829,28 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
               isImageBased={isImageBased}
               packImages={retailPackImages}
               setPackImages={setRetailPackImages}
+              suggestions={suggestions as any}
+              isAnalyzing={isAnalyzing}
+              handleAnalyzeTranscript={handleAnalyzeTranscript}
+              audioRecorderRef={audioRecorderRef}
+              clipDuration={clipDuration}
+              transcribedClips={transcribedClips}
+              setTranscribedClips={setTranscribedClips}
+              isSubmitting={isSubmitting}
+              onSubmit={handleWebhookSubmit}
+              onCancel={handleCancelRequest}
+              selectedSalesperson={selectedSalesperson}
+              onAcceptAllSuggestions={handleAcceptAllSuggestions}
+            />
+          )}
+          {category === 'healthcare' && (
+            <HealthcareForm
+              form={healthcareForm}
+              update={updateHealthcareForm}
+              lang={lang}
+              isImageBased={isImageBased}
+              packImages={healthcarePackImages}
+              setPackImages={setHealthcarePackImages}
               suggestions={suggestions as any}
               isAnalyzing={isAnalyzing}
               handleAnalyzeTranscript={handleAnalyzeTranscript}

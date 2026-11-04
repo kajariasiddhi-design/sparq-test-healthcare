@@ -18,7 +18,7 @@ interface LoadResponsesModalProps {
     isLoadingFullSubmission: boolean;
     error: string | null;
     searchDiscussions: (date: string, salesperson: string, category: string) => void;
-    category?: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | null;
+    category?: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' | null;
 }
 
 const getTodayDateString = () => {

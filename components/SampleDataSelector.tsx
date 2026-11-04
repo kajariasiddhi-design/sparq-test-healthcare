@@ -6,7 +6,7 @@ interface SampleDataSelectorProps {
   onSelect: (data: any, name: MultilingualText, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail') => void;
   lang: Language;
   translations: any;
-  currentCategory: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | null;
+  currentCategory: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' | null;
   disabled?: boolean;
 }
 

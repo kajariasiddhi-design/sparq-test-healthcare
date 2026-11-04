@@ -8,7 +8,7 @@
  * - Figures out if a product is a food item or an industrial tool based on what was typed.
  */
 
-import { NewFormData, Language, UploadedImage, IndustrialFormData, LifestyleFormData, RetailFormData } from './types';
+import { NewFormData, Language, UploadedImage, IndustrialFormData, LifestyleFormData, RetailFormData, HealthcareFormData } from './types';
 import { psychographicOptions } from './data/psychographics';
 import { formTranslations, industrialFormTranslations } from './data/translations';
 import { lifestyleFormTranslations } from './data/lifestyleTranslations';
@@ -129,6 +129,20 @@ export const getInitialRetailFormData = (): RetailFormData => ({
     competitors: "",
     desiredTone: "", desiredWorld: "", storeAsPerson: "", storeAsPersonOther: "",
     adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, ongoingOffer: "", offerDetails: "", dialogueLanguage: "",
+    fullTranscript: ""
+});
+
+export const getInitialHealthcareFormData = (): HealthcareFormData => ({
+    customerID: "", salesperson: "",
+    brandSpecial: "", hospitalName: "", facilityCountRegions: "", primarySpecialties: "",
+    founder: "", foundedYear: "", specialAilments: "", specialDoctors: "", specialTechnology: "", specialValue: "", specialDiagnosisTime: "", specialService: "", specialOthers: "", recognitions: "",
+    patientAge: [], patientGender: "", patientIncome: [], patientOrigin: [], patientGeography: [], otherCustomerSegment: "", otherCustomerSegmentBrief: "",
+    specialtyScope: "", treatments: [], treatmentsOther: "", decisionMakerLifestyle: [], companions: [], companionsOther: "",
+    keyBenefits: "", competitorStandout: "", patientFeel: "",
+    competitors: "",
+    desiredTone: "", desiredWorld: "", hospitalAsPerson: "", hospitalAsPersonOther: "",
+    adObjectives: [], adObjectiveDetails: {}, adImportantMessages: [], adMessageDetails: {}, dialogueLanguage: "",
+    facilityListLink: "",
     fullTranscript: ""
 });
 
@@ -421,6 +435,55 @@ export const transformRetailDataForWebhook = (data: RetailFormData, lang: Langua
         "Important Messages": data.adImportantMessages.map(m => `${m}: ${data.adMessageDetails[m] || ''}`),
         "Ongoing Offer Event": data.ongoingOffer === 'Yes' ? (data.offerDetails ? `Yes: ${data.offerDetails}` : 'Yes') : 'No',
         "Store Link": data.storesListLink || '',
+        "Dialogue Language": data.dialogueLanguage,
+        "Session Transcript": data.fullTranscript,
+    };
+};
+
+export const transformHealthcareDataForWebhook = (data: HealthcareFormData, lang: Language, packImages: UploadedImage[], category: 'healthcare', isImageBased: boolean = false) => {
+    const treatments = data.specialtyScope === 'Multi-specialty'
+        ? 'Multi-specialty'
+        : data.treatments.map(t => t === 'Others' ? `Others: ${data.treatmentsOther || ''}` : t).join(', ');
+    return {
+        language: lang,
+        category: category,
+        "Salesperson": data.salesperson,
+        "Customer ID": data.customerID,
+        "Hospital Name": data.hospitalName,
+        "Brand Name": data.hospitalName,
+        "Hospital / Clinic Count and Regions": data.facilityCountRegions,
+        "Primary Specialties / Medical Services": data.primarySpecialties,
+        "Hospital Images": packImages.map(img => ({ fileName: img.fileName, mimeType: img.mimeType, data: img.data.split(',')[1] })),
+        "Pack Images": packImages.map(img => ({ fileName: img.fileName, mimeType: img.mimeType, data: img.data.split(',')[1] })),
+        "Hospital's Special Qualities": data.brandSpecial,
+        "Founded": `${data.founder}, ${data.foundedYear}`,
+        "Ailments / Specialties Offered": data.specialAilments,
+        "Popular Doctors": data.specialDoctors,
+        "Technology Used": data.specialTechnology,
+        "Value / Pricing": data.specialValue,
+        "Time Taken in Diagnosis": data.specialDiagnosisTime,
+        "Service / Trust": data.specialService,
+        "Others": data.specialOthers,
+        "Recognitions": data.recognitions,
+        "Patient - Age": data.patientAge.join(', '),
+        "Patient - Gender": data.patientGender,
+        "Patient - Income": data.patientIncome.join(', '),
+        "Patient - Comes From": data.patientOrigin.join(', '),
+        "Patient - Geography": data.patientGeography.join(', '),
+        "Other Customer Segment": data.otherCustomerSegment === 'Others' ? `Others: ${data.otherCustomerSegmentBrief || ''}` : (data.otherCustomerSegment || ''),
+        "Main Treatments": treatments,
+        "Decision Maker Lifestyle": data.decisionMakerLifestyle,
+        "Accompanied By": data.companions.map(c => c === 'Others' ? `Others: ${data.companionsOther || ''}` : c).join(', '),
+        "Key Benefits Offered": data.keyBenefits,
+        "Competitor Standout Benefits": data.competitorStandout,
+        "Patient Feel Post Visit": data.patientFeel,
+        "Primary Competitors": parseArrayOrCsv(data.competitors),
+        "Desired Brand Tone": data.desiredTone,
+        "Desired Brand World": data.desiredWorld,
+        "Hospital Persona": data.hospitalAsPerson === 'Other' ? `Other: ${data.hospitalAsPersonOther || ''}` : data.hospitalAsPerson,
+        "Ad Objectives": data.adObjectives.map(o => `${o}: ${data.adObjectiveDetails[o] || ''}`),
+        "Important Messages": data.adImportantMessages.map(m => `${m}: ${data.adMessageDetails[m] || ''}`),
+        "Hospital List Link": data.facilityListLink || '',
         "Dialogue Language": data.dialogueLanguage,
         "Session Transcript": data.fullTranscript,
     };

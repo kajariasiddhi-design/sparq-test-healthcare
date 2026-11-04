@@ -1,0 +1,22 @@
+Recompose. Generate four vivid Indian scenarios that can become the world of an ad about to begin based on the following inputs. Each world snapshot should be a maximum of 20 words only. Not more than that.
+
+Primary Specialties / Medical Services: {{ $('Set Healthcare Values').item.json['Primary Specialties / Medical Services'] }}
+Main Treatments Patients Come For: {{ $('Set Healthcare Values').item.json['Main Treatments'] }}
+Hospital / Clinic Count and Regions: {{ $('Set Healthcare Values').item.json['Hospital / Clinic Count and Regions'] }}
+Patient – Age: {{ $('Set Healthcare Values').item.json['Patient - Age'] }}
+Patient – Gender: {{ $('Set Healthcare Values').item.json['Patient - Gender'] }}
+Patient – Income: {{ $('Set Healthcare Values').item.json['Patient - Income'] }}
+Patient – Geography: {{ $('Set Healthcare Values').item.json['Patient - Geography'] }}
+Where Most Patients Come From: {{ $('Set Healthcare Values').item.json['Patient - Comes From'] }}
+Decision Makers' Lifestyle & Beliefs: {{ $('Set Healthcare Values').item.json['Decision Maker Lifestyle'] }}
+Who Usually Accompanies the Patient: {{ $('Set Healthcare Values').item.json['Accompanied By'] }}
+Desired Brand World: {{ $('Set Healthcare Values').item.json['Desired Brand World'] }}
+
+Healthcare guidance for the worlds:
+- Set the worlds in everyday Indian places where these patients and their families live, work, study, play, celebrate or travel — homes, neighbourhoods, workplaces, schools, playgrounds, festivals, commutes.
+- At most one world may be set in or around the hospital or clinic, and it must feel calm and human (a reception area, a waiting lounge, a hospital garden) — never an operation theatre, ICU or emergency scene.
+- If the patients include children (ages 0–7 or 8–15), include at least one family or child-centred setting.
+- No world should show illness, injury, pain or distress.
+
+Only to be used if all the above fields are missing / undefined:
+Positioning - {{ $('Webhook').item.json.body.form_data.brandDescriptionResponse.positioning }}
