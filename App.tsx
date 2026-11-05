@@ -41,6 +41,7 @@ import {
   transformHealthcareDataForWebhook,
   mapRawDataToLifestyleFormData,
   mapRawDataToRetailFormData,
+  mapRawDataToHealthcareFormData,
   inferCategory,
   mapRawDataToIndustrialFormData
 } from './utils';
@@ -683,7 +684,7 @@ function App() {
         timestamp: r.timestamp || r.Timestamp || r.Date || r.date || r.created_at || new Date().toISOString(),
         salesperson: r.salesperson || r.Salesperson || r.SalesPerson || r.sales_person || '',
         region: r.region || r.Region || r.state || r.State || '',
-        category: category as 'fmcg' | 'industrial',
+        category: category as PastSubmission['category'],
       }));
       console.log('Mapped results:', mappedResults);
       setSearchResults(mappedResults);
@@ -736,6 +737,15 @@ function App() {
           if (data.packImages) {
             const loadedImages = await Promise.all(data.packImages.map(urlToUploadedImage));
             setRetailPackImages(loadedImages.filter((img): img is UploadedImage => !!img));
+          }
+        } else if (detectedCategory === 'healthcare') {
+          const formData = mapRawDataToHealthcareFormData(data);
+          setHealthcareForm(formData);
+          setCategory('healthcare');
+          setHealthcarePackImages([]);
+          if (data.packImages) {
+            const loadedImages = await Promise.all(data.packImages.map(urlToUploadedImage));
+            setHealthcarePackImages(loadedImages.filter((img): img is UploadedImage => !!img));
           }
         } else {
           const formData = mapRawDataToFormData(data);

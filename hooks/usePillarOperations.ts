@@ -11,7 +11,7 @@ import { useState, useCallback } from 'react';
 import { AdPillar, Story, Frame, BrandDescriptionResponse } from '../types';
 import { callGemini3, callGeminiAudio, callGeminiFlashLite } from '../utils/api';
 import { GEMINI_API_KEY, WEBHOOK_ACTIONS } from '../constants';
-import { extractArrayFromWebhookResponse } from '../utils';
+import { extractArrayFromWebhookResponse, getTargetAudience } from '../utils';
 
 interface UsePillarOperationsProps {
     getFullContext: () => any;
@@ -65,7 +65,7 @@ export const usePillarOperations = ({
             const prompt = `Analyze these ad pillars and recommend the top 2 that best fit the brand.
 
 Brand: ${brandInfo["Brand Name"] || brandInfo["Ad Brand"] || 'Unknown'}
-Target Audience: ${brandInfo["Consumer - Age"]}, ${brandInfo["Consumer - Gender"]}
+Target Audience: ${getTargetAudience(brandInfo)}
 
 Pillars: ${JSON.stringify(simplifiedPillars)}
 

@@ -37,7 +37,7 @@ const LoadResponsesModal: React.FC<LoadResponsesModalProps> = ({
     const [searchDate, setSearchDate] = useState('');
     const [searchRegion, setSearchRegion] = useState(selectedRegion || '');
     const [searchSalesperson, setSearchSalesperson] = useState(selectedSalesperson || '');
-    const [searchCategory, setSearchCategory] = useState<'fmcg' | 'industrial' | 'lifestyle' | 'retail' | ''>('');
+    const [searchCategory, setSearchCategory] = useState<'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' | ''>('');
     const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -92,6 +92,7 @@ const LoadResponsesModal: React.FC<LoadResponsesModalProps> = ({
                             <option value="industrial">{modalTranslations.industrialOption[lang]}</option>
                             <option value="lifestyle">Lifestyle</option>
                             <option value="retail">Organised Retail</option>
+                            <option value="healthcare">Healthcare and Hospitals</option>
                         </select>
                     </div>
                     <div className="w-full">

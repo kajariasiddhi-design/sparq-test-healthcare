@@ -11,7 +11,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { World, BrandDescriptionResponse } from '../types';
 import { callGemini3, callGemini3Image, callGeminiFlashLite, callOpenRouterImage } from '../utils/api';
 import { GEMINI_API_KEY, OPENROUTER_API_KEY, WEBHOOK_ACTIONS } from '../constants';
-import { extractArrayFromWebhookResponse } from '../utils';
+import { extractArrayFromWebhookResponse, getTargetAudience } from '../utils';
 
 interface UseWorldOperationsProps {
     getFullContext: () => any;
@@ -81,7 +81,7 @@ export const useWorldOperations = ({
             const prompt = `Analyze these brand worlds and recommend the top 2 that best fit the brand.
       
 Brand: ${brandInfo["Brand Name"] || brandInfo["Ad Brand"] || 'Unknown'}
-Target Audience: ${brandInfo["Consumer - Age"]}, ${brandInfo["Consumer - Gender"]}
+Target Audience: ${getTargetAudience(brandInfo)}
 
 Worlds: ${JSON.stringify(simplifiedWorlds)}
 

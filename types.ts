@@ -621,7 +621,7 @@ export interface PastSubmission {
   timestamp: string;
   salesperson?: string;
   region?: string;
-  category?: 'fmcg' | 'industrial' | 'lifestyle' | 'retail';
-  formData?: NewFormData | IndustrialFormData | LifestyleFormData | RetailFormData;
+  category?: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare';
+  formData?: NewFormData | IndustrialFormData | LifestyleFormData | RetailFormData | HealthcareFormData;
   brandDescriptionResponse?: BrandDescriptionResponse | null;
 }

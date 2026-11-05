@@ -12,6 +12,7 @@ import { NewFormData, Language, UploadedImage, IndustrialFormData, LifestyleForm
 import { psychographicOptions } from './data/psychographics';
 import { formTranslations, industrialFormTranslations } from './data/translations';
 import { lifestyleFormTranslations } from './data/lifestyleTranslations';
+import { healthcareFormTranslations } from './data/healthcareTranslations';
 import { retailFormTranslations } from './data/retailTranslations';
 
 /**
@@ -526,16 +527,28 @@ const safeStr = (val: any): string => {
     return String(val);
 };
 
-export const inferCategory = (data: any): 'fmcg' | 'industrial' | 'lifestyle' | 'retail' => {
+/**
+ * Target audience for the world and pillar recommendation prompts. Each category names these
+ * fields differently (Consumer, Customer, Shopper, Patient).
+ */
+export const getTargetAudience = (info: Record<string, any>): string => {
+    const age = info["Consumer - Age"] || info["Customer - Age"] || info["Shopper - Age"] || info["Patient - Age"];
+    const gender = info["Consumer - Gender"] || info["Customer - Gender"] || info["Shopper - Gender"] || info["Patient - Gender"];
+    return [age, gender].filter(Boolean).join(', ') || 'Not specified';
+};
+
+export const inferCategory = (data: any): 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' => {
     // Check for explicit category field first
     if (data.category === 'industrial' || data.Category === 'industrial') return 'industrial';
     if (data.category === 'lifestyle' || data.Category === 'lifestyle') return 'lifestyle';
     if (data.category === 'retail' || data.Category === 'retail') return 'retail';
+    if (data.category === 'healthcare' || data.Category === 'healthcare') return 'healthcare';
     if (data.category === 'fmcg' || data.Category === 'fmcg') return 'fmcg';
 
     if (data['Products/Brands Offered']) return 'industrial';
     if (data['Product Sub-category'] || data['Design / Craftsmanship']) return 'lifestyle';
     if (data['Primary Categories'] || data['Store\'s Special Qualities']) return 'retail';
+    if (data['Hospital Persona'] || data['Hospital\'s Special Qualities']) return 'healthcare';
 
     // Industrial unique indicators
     if (data['Typical Household Type'] || data['Show Influencer in Ad?'] || data['Primary Customer / Influencer']) return 'industrial';
@@ -545,6 +558,142 @@ export const inferCategory = (data: any): 'fmcg' | 'industrial' | 'lifestyle' | 
 
     // Default fallback
     return 'fmcg';
+};
+
+/**
+ * Finds known option values inside a saved answer. Matching on the options, rather than splitting on
+ * commas, keeps options that contain commas intact. Anything unrecognised is returned as `rest`.
+ */
+const pickKnownOptions = (raw: any, options: string[]): { selected: string[]; rest: string } => {
+    let text = parseArrayOrCsv(raw).join(', ');
+    const hits: { opt: string; at: number }[] = [];
+    [...options].sort((a, b) => b.length - a.length).forEach(opt => {
+        let from = 0;
+        let at = text.indexOf(opt, from);
+        while (at !== -1) {
+            const before = text.slice(0, at).trimEnd();
+            const after = text.slice(at + opt.length).trimStart();
+            if ((before === '' || before.endsWith(',')) && (after === '' || after.startsWith(','))) {
+                hits.push({ opt, at });
+                text = text.slice(0, at) + '\u0000'.repeat(opt.length) + text.slice(at + opt.length);
+                return;
+            }
+            from = at + opt.length;
+            at = text.indexOf(opt, from);
+        }
+    });
+    const rest = text.replace(/\u0000+/g, '').split(',').map(s => s.trim()).filter(Boolean).join(', ');
+    return { selected: hits.sort((a, b) => a.at - b.at).map(h => h.opt), rest };
+};
+
+/** Same idea for "Option: detail" answers such as Ad Objectives, where details can contain commas. */
+const pickOptionDetails = (raw: any, options: string[]): { selected: string[]; details: { [key: string]: string } } => {
+    const text = parseArrayOrCsv(raw).join(', ');
+    const hits = options
+        .map(opt => {
+            let at = text.indexOf(`${opt}:`);
+            while (at > 0 && !text.slice(0, at).trimEnd().endsWith(',')) {
+                at = text.indexOf(`${opt}:`, at + 1);
+            }
+            return { opt, at };
+        })
+        .filter(h => h.at !== -1)
+        .sort((a, b) => a.at - b.at);
+    const details: { [key: string]: string } = {};
+    hits.forEach((h, i) => {
+        const end = i + 1 < hits.length ? hits[i + 1].at : text.length;
+        const detail = text.slice(h.at + h.opt.length + 1, end).trim().replace(/,$/, '').trim();
+        if (detail) details[h.opt] = detail;
+    });
+    return { selected: hits.map(h => h.opt), details };
+};
+
+export const mapRawDataToHealthcareFormData = (raw: any): HealthcareFormData => {
+    const formData = getInitialHealthcareFormData();
+    const data = Array.isArray(raw) ? raw[0] : raw;
+    if (!data) return formData;
+
+    const s3 = healthcareFormTranslations.section3;
+    const s6 = healthcareFormTranslations.section6;
+
+    formData.salesperson = safeStr(data["Salesperson"]);
+    formData.customerID = safeStr(data["Customer ID"]);
+    formData.hospitalName = safeStr(data["Hospital Name"] || data["Brand Name"] || data["Ad Brand"]);
+    formData.brandSpecial = safeStr(data["Hospital's Special Qualities"]);
+    formData.facilityCountRegions = safeStr(data["Hospital / Clinic Count and Regions"]);
+    formData.primarySpecialties = safeStr(data["Primary Specialties / Medical Services"]);
+
+    const [founder, year] = safeStr(data["Founded"] || ',').split(',').map((s: string) => s.trim());
+    formData.founder = founder || '';
+    formData.foundedYear = year || '';
+    formData.specialAilments = safeStr(data["Ailments / Specialties Offered"]);
+    formData.specialDoctors = safeStr(data["Popular Doctors"]);
+    formData.specialTechnology = safeStr(data["Technology Used"]);
+    formData.specialValue = safeStr(data["Value / Pricing"]);
+    formData.specialDiagnosisTime = safeStr(data["Time Taken in Diagnosis"]);
+    formData.specialService = safeStr(data["Service / Trust"]);
+    formData.specialOthers = safeStr(data["Special Others"] || data["Others"]);
+    formData.recognitions = safeStr(data["Recognitions"]);
+
+    formData.patientAge = pickKnownOptions(data["Patient - Age"], Object.keys(s3.ageOptions)).selected;
+    formData.patientGender = safeStr(data["Patient - Gender"]);
+    formData.patientIncome = pickKnownOptions(data["Patient - Income"], Object.keys(s3.incomeOptions)).selected;
+    formData.patientOrigin = pickKnownOptions(data["Patient - Comes From"], Object.keys(s3.originOptions)).selected;
+    formData.patientGeography = pickKnownOptions(data["Patient - Geography"], Object.keys(s3.geoOptions)).selected;
+
+    const segment = safeStr(data["Other Customer Segment"]);
+    if (segment.startsWith('Others:')) {
+        formData.otherCustomerSegment = 'Others';
+        formData.otherCustomerSegmentBrief = segment.replace(/^Others:\s*/, '');
+    } else {
+        formData.otherCustomerSegment = segment as HealthcareFormData['otherCustomerSegment'];
+    }
+
+    const treatmentsText = safeStr(data["Main Treatments"]);
+    if (treatmentsText === 'Multi-specialty') {
+        formData.specialtyScope = 'Multi-specialty';
+    } else if (treatmentsText) {
+        const { selected, rest } = pickKnownOptions(treatmentsText, Object.keys(s3.q3_2.options));
+        const other = rest.replace(/^Others:\s*/, '');
+        formData.specialtyScope = 'Single / select specialties or clinics';
+        formData.treatments = other ? [...selected.filter(t => t !== 'Others'), 'Others'] : selected;
+        formData.treatmentsOther = other;
+    }
+
+    formData.decisionMakerLifestyle = pickKnownOptions(data["Decision Maker Lifestyle"], s3.q3_3.options.map(o => o.value)).selected;
+
+    const companions = pickKnownOptions(data["Accompanied By"], Object.keys(s3.q3_4.options));
+    const companionsOther = companions.rest.replace(/^Others:\s*/, '');
+    formData.companions = companionsOther ? [...companions.selected.filter(c => c !== 'Others'), 'Others'] : companions.selected;
+    formData.companionsOther = companionsOther;
+
+    formData.keyBenefits = safeStr(data["Key Benefits Offered"]);
+    formData.competitorStandout = safeStr(data["Competitor Standout Benefits"]);
+    formData.patientFeel = safeStr(data["Patient Feel Post Visit"]);
+    formData.competitors = parseArrayOrCsv(data["Primary Competitors"]).join('\n');
+
+    formData.desiredTone = safeStr(data["Desired Brand Tone"]);
+    formData.desiredWorld = safeStr(data["Desired Brand World"]);
+    const persona = safeStr(data["Hospital Persona"]);
+    if (persona.startsWith('Other:')) {
+        formData.hospitalAsPerson = 'Other';
+        formData.hospitalAsPersonOther = persona.replace(/^Other:\s*/, '');
+    } else {
+        formData.hospitalAsPerson = persona;
+    }
+
+    const objectives = pickOptionDetails(data["Ad Objectives"], s6.q6_3.options);
+    formData.adObjectives = objectives.selected;
+    formData.adObjectiveDetails = objectives.details;
+    const messages = pickOptionDetails(data["Important Messages"], s6.q6_4.options);
+    formData.adImportantMessages = messages.selected;
+    formData.adMessageDetails = messages.details;
+
+    formData.facilityListLink = safeStr(data["Hospital List Link"]);
+    formData.dialogueLanguage = safeStr(data["Dialogue Language"]);
+    formData.fullTranscript = safeStr(data["Transcript"] || data["Session Transcript"]);
+
+    return formData;
 };
 
 export const mapRawDataToIndustrialFormData = (raw: any): IndustrialFormData => {
