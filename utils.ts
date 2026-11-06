@@ -444,7 +444,11 @@ export const transformRetailDataForWebhook = (data: RetailFormData, lang: Langua
 export const transformHealthcareDataForWebhook = (data: HealthcareFormData, lang: Language, packImages: UploadedImage[], category: 'healthcare', isImageBased: boolean = false) => {
     const treatments = data.specialtyScope === 'Multi-specialty'
         ? 'Multi-specialty'
-        : data.treatments.map(t => t === 'Others' ? `Others: ${data.treatmentsOther || ''}` : t).join(', ');
+        : data.treatments.map(t => {
+            if (t === 'Others') return `Others: ${data.treatmentsOther || ''}`;
+            const hint = healthcareFormTranslations.section3.q3_2.options[t]?.hint;
+            return hint ? `${t}: ${hint}` : t;
+        }).join(', ');
     return {
         language: lang,
         category: category,
@@ -496,6 +500,21 @@ export const transformHealthcareDataForWebhook = (data: HealthcareFormData, lang
 /**
  * Helper to parse array fields that might be JSON arrays or CSV strings.
  */
+/** Psychographic options that were reworded, so past responses still load against the new wording. */
+const RENAMED_PSYCHOGRAPHICS: Record<string, string> = {
+    "Young Boys — Boyfriend (Cafés, casual outings)": "Young Boys — With girlfriend (Cafés, casual outings)",
+    "Young Men — Boyfriend / Husband (Dating, shared activities)": "Young Men — With girlfriend / wife (Dating, shared activities)",
+    "Youth (Boys) — Boyfriend": "Youth (Boys) — With girlfriend",
+};
+const migratePsychographic = (title: string): string => RENAMED_PSYCHOGRAPHICS[title.trim()] || title;
+
+/** "Desi" is no longer a Brand World option, so past responses load without it. */
+const migrateBrandWorld = (value: any): string => {
+    const world = safeStr(value).trim();
+    if (world === 'Desi') return '';
+    return world === 'Desi / Regional' ? 'Regional' : world;
+};
+
 export const parseArrayOrCsv = (value: any): string[] => {
     if (!value) return [];
     if (Array.isArray(value)) return value.map(String).filter(Boolean);
@@ -796,10 +815,14 @@ export const mapRawDataToHealthcareFormData = (raw: any): HealthcareFormData => 
     if (treatmentsText === 'Multi-specialty') {
         formData.specialtyScope = 'Multi-specialty';
     } else if (treatmentsText) {
-        const { selected, rest } = pickKnownOptions(treatmentsText, Object.keys(s3.q3_2.options));
+        // Newer records hold "Oncology: Cancer"; older ones hold just "Oncology"
+        const specialties = Object.entries(s3.q3_2.options);
+        const specialtyTexts = specialties.flatMap(([key, opt]) => [key, `${key}: ${opt.hint}`]);
+        const { selected: matched, rest } = pickKnownOptions(treatmentsText, specialtyTexts);
+        const selected = matched.map(text => specialties.find(([key, opt]) => text === key || text === `${key}: ${opt.hint}`)![0]);
         const other = rest.replace(/^Others:\s*/, '');
         formData.specialtyScope = 'Single / select specialties or clinics';
-        formData.treatments = other ? [...selected.filter(t => t !== 'Others'), 'Others'] : selected;
+        formData.treatments = other ? [...selected, 'Others'] : selected;
         formData.treatmentsOther = other;
     }
 
@@ -927,7 +950,8 @@ export const mapRawDataToIndustrialFormData = (raw: any): IndustrialFormData => 
     formData.competitors = parseArrayOrCsv(data["Primary Competitors"] || data["Competitors"]).join('\n');
 
     if (data["Desired Brand Tone"]) formData.desiredImageryTone = toneReverseMap.get(data["Desired Brand Tone"].trim()) || data["Desired Brand Tone"];
-    if (data["Desired Brand World"]) formData.desiredImageryWorld = worldReverseMap.get(data["Desired Brand World"].trim()) || data["Desired Brand World"];
+    const savedWorld = migrateBrandWorld(data["Desired Brand World"]);
+    if (savedWorld) formData.desiredImageryWorld = worldReverseMap.get(savedWorld) || savedWorld;
 
     // Fallback for old combined key
     if (!formData.desiredImageryTone || !formData.desiredImageryWorld) {
@@ -1087,7 +1111,7 @@ export const mapRawDataToFormData = (raw: any): NewFormData => {
     formData.consumerDemographics.income = parseArrayOrCsv(data["Consumer - Income"]).map(v => incomeReverseMap.get(v.trim()) || v);
     formData.consumerDemographics.geography = parseArrayOrCsv(data["Consumer - Geography"]).map(v => geoReverseMap.get(v.trim()) || v);
 
-    formData.psychographics = parseArrayOrCsv(data["Psychographics"] || data["Lifestyle & Beliefs"]).map(title => psychographicTitleToIdMap.get(title.trim())).filter((id): id is string => !!id);
+    formData.psychographics = parseArrayOrCsv(data["Psychographics"] || data["Lifestyle & Beliefs"]).map(title => psychographicTitleToIdMap.get(migratePsychographic(title).trim())).filter((id): id is string => !!id);
 
     // Reverse map for desired imagery
     const imageryToneReverseMap = createReverseMap(formTranslations.section7.q7_1.options_tone);
@@ -1096,7 +1120,8 @@ export const mapRawDataToFormData = (raw: any): NewFormData => {
 
     // Support new flat keys and old combined key
     if (data["Desired Brand Tone"]) formData.desiredImageryTone = imageryToneReverseMap.get(data["Desired Brand Tone"].trim()) || data["Desired Brand Tone"];
-    if (data["Desired Brand World"]) formData.desiredImageryWorld = imageryWorldReverseMap.get(data["Desired Brand World"].trim()) || data["Desired Brand World"];
+    const savedWorld = migrateBrandWorld(data["Desired Brand World"]);
+    if (savedWorld) formData.desiredImageryWorld = imageryWorldReverseMap.get(savedWorld) || savedWorld;
 
     const attributesRaw = parseArrayOrCsv(data["Desired Brand Attributes"]);
     attributesRaw.forEach(val => {
@@ -1295,7 +1320,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
 
     formData.customerAge = parseArrayOrCsv(data["Customer - Age"]);
     formData.customerGender = data["Customer - Gender"] || '';
-    formData.customerLifestyle = parseArrayOrCsv(data["Lifestyle & Beliefs"] || data["Typical Lifestyle/Style Preference"]);
+    formData.customerLifestyle = parseArrayOrCsv(data["Lifestyle & Beliefs"] || data["Typical Lifestyle/Style Preference"]).map(migratePsychographic);
 
     const ocSeg = safeStr(data["Other Customer Segment"]);
     if (ocSeg.startsWith('Others:')) {
@@ -1319,7 +1344,7 @@ export const mapRawDataToLifestyleFormData = (raw: any): LifestyleFormData => {
     formData.competitors = parseArrayOrCsv(data["Primary Competitors"]).join('\n');
     
     formData.desiredTone = data["Desired Brand Tone"] || '';
-    formData.desiredWorld = data["Desired Brand World"] || '';
+    formData.desiredWorld = migrateBrandWorld(data["Desired Brand World"]);
     const rawAttrs = parseArrayOrCsv(data["Desired Brand Attributes"]);
     const attrOther = rawAttrs.find(a => a.startsWith('Other:'));
     formData.desiredAttributes = attrOther ? rawAttrs.map(a => a.startsWith('Other:') ? 'Other' : a) : rawAttrs;
@@ -1402,7 +1427,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.shopperIncome = parseArrayOrCsv(data["Shopper - Income"]);
     formData.shopperGeography = parseArrayOrCsv(data["Shopper - Geography"]);
     formData.shopperCoreNeed = data["Shopper Core Need"] || data["Problem"] || '';
-    formData.shopperLifestyle = parseArrayOrCsv(data["Shopper Lifestyle"]);
+    formData.shopperLifestyle = parseArrayOrCsv(data["Shopper Lifestyle"]).map(migratePsychographic);
 
     const ocSegR = safeStr(data["Other Customer Segment"]);
     if (ocSegR.startsWith('Others:')) {
@@ -1430,7 +1455,7 @@ export const mapRawDataToRetailFormData = (raw: any): RetailFormData => {
     formData.competitors = parseArrayOrCsv(data["Primary Competitors"]).join('\n');
     
     formData.desiredTone = data["Desired Store Tone"] || data["Desired Brand Tone"] || '';
-    formData.desiredWorld = data["Desired Brand World"] || '';
+    formData.desiredWorld = migrateBrandWorld(data["Desired Brand World"]);
     const sapRaw = safeStr(data["Store Persona"] || data["Consumer's View of Brand Persona"]);
     if (sapRaw.startsWith('Other:')) {
         formData.storeAsPerson = 'Other';

@@ -7,7 +7,6 @@ import ImageUploader from './ImageUploader.tsx';
 import AudioTranscriptionManager from './AudioTranscriptionManager.tsx';
 import SearchableMultiSelect from './SearchableMultiSelect.tsx';
 import { Section, Label, TextInput, TextArea, MultiChips, SingleChips, SuggestedInput, TranslatedText } from './FormElements.tsx';
-import { healthcarePsychographicImageMap } from '../data/healthcarePsychographics';
 
 interface HealthcareFormProps {
     form: HealthcareFormData;
@@ -364,7 +363,7 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                                     <div className="flex justify-end mb-3">
                                         <span className="text-xs font-normal text-indigo-400">{lifestyleCount} / {LIFESTYLE_LIMIT} selected</span>
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         {section3.q3_3.options.map((opt) => {
                                             const isSelected = form.decisionMakerLifestyle.includes(opt.value);
                                             const isDisabled = !isSelected && lifestyleCount >= LIFESTYLE_LIMIT;
@@ -390,13 +389,6 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                                                                 : 'border-white bg-white shadow-sm hover:border-indigo-200 hover:shadow-md'
                                                     }`}
                                                 >
-                                                    <div className="aspect-[4/3] w-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400 overflow-hidden">
-                                                        {healthcarePsychographicImageMap[opt.value] ? (
-                                                            <img src={healthcarePsychographicImageMap[opt.value]} alt={title} className="w-full h-full object-contain" />
-                                                        ) : (
-                                                            <div className="p-2 border border-slate-200 rounded text-[9px] uppercase tracking-tighter">IMAGE PREVIEW</div>
-                                                        )}
-                                                    </div>
                                                     <div className="p-3">
                                                         <div className={`font-bold text-[13px] leading-tight mb-1 ${isSelected ? 'text-indigo-900' : 'text-neutral-800'}`}>
                                                             {title}

@@ -16,7 +16,6 @@ export const section7 = {
         "Premium": addTranslations("Premium", "प्रीमियम", "பிரீமியம்", "ప్రీమియం", "પ્રીમિયમ"),
         "Luxury": addTranslations("Luxury", "लक्ज़री", "ஆடம்பர", "విలాసవంతమైన", "લક્ઝરી"),
         "MassPopular": addTranslations("Mass / Popular", "मास / लोकप्रिय", "மாஸ் / பிரபலமான", "మాస్ / ప్రసిద్ధ", "માસ / લોકપ્રિય"),
-        "Desi": addTranslations("Desi", "देसी", "தேசி", "దేశీ", "દેશી"),
         "International": addTranslations("International", "अंतर्राष्ट्रीय", "சர்வதேச", "అంతర్జాతీయ", "આંતરરાષ્ટ્રીય"),
       },
       category_attributes: addTranslations("Category 3 — Attributes (Select up to 2)", "श्रेणी 3 — गुण (2 तक चुनें)", "வகை 3 — பண்புகள் (2 வரை தேர்ந்தெடுக்கவும்)", "వర్గం 3 — లక్షణాలు (2 వరకు ఎంచుకోండి)", "શ્રેણી 3 — ગુણધર્મો (2 સુધી પસંદ કરો)"),

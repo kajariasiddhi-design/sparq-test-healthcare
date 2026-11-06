@@ -131,7 +131,7 @@ export const NEW_SAMPLE_PROFILES: { name: MultilingualText, data: any, category:
             consumerDemographics: { age: ["36-50", "50+"], gender: "Women", genderOther: "", income: ["Upper Middle"], geography: ["Big Cities"] },
             psychographics: ["women-family-group"],
             desiredImageryTone: "Mature",
-            desiredImageryWorld: "Desi",
+            desiredImageryWorld: "MassPopular",
             desiredImageryAttributes: ["Natural"],
             consumerViewPersona: "family_elder",
             adObjectives: ["Emotions/Image", "Awareness"],

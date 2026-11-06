@@ -53,7 +53,7 @@ export const psychographicOptions: { id: string; imageUrl: string; title: string
     { id: 'youth-boys-studious', imageUrl: youthBoysAdventurousImg, title: 'Youth (Boys) — Adventurous', desc: 'Outdoors, sports, exploring', category: 'youth_boys' },
     { id: 'youth-boys-adventurous', imageUrl: youthBoysLeaderImg, title: 'Youth (Boys) — Leader of the pack', desc: 'Confident, popular', category: 'youth_boys' },
     { id: 'youth-boys-urban', imageUrl: youthBoysAllRounderImg, title: 'Youth (Boys) — All-rounder', desc: 'Balanced, achiever', category: 'youth_boys' },
-    { id: 'youth-boys-social', imageUrl: youthBoysBoyfriendImg, title: 'Youth (Boys) — Boyfriend', desc: 'Cafés, casual outings, shared activities', category: 'youth_boys' },
+    { id: 'youth-boys-social', imageUrl: youthBoysBoyfriendImg, title: 'Youth (Boys) — With girlfriend', desc: 'Cafés, casual outings, shared activities', category: 'youth_boys' },
     { id: 'youth-boys-sporty', imageUrl: youthBoysSocialImg, title: 'Youth (Boys) — Social, with friends', desc: 'Hangouts, fun', category: 'youth_boys' },
 
     // Youth (Girls)

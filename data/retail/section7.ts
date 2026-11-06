@@ -8,7 +8,7 @@ export const section7 = {
       world: addTranslations("Brand World", "ब्रांड की दुनिया", "பிராண்ட் உலகம்", "బ్రాండ్ ప్రపంచం", "બ્રાન્ડ વર્લ્ડ"),
       options: {
         tone: ["Youthful / Fun", "Trustworthy / Mature", "Aspirational", "Warm / Family-oriented"],
-        world: ["Premium", "Mass / Popular", "Value-driven", "Desi / Regional", "Modern / International"],
+        world: ["Premium", "Mass / Popular", "Value-driven", "Regional", "Modern / International"],
       }
     },
         q7_2: {

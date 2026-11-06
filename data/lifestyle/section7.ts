@@ -9,7 +9,7 @@ export const section7 = {
       attributes: addTranslations("Attributes (up to 2)", "गुण (2 तक)", "பண்புகள் (2 வரை)", "లక్షణాలు (2 వరకు)", "ગુણધર્મો (2 સુધી)"),
       options: {
         tone: ["Youthful", "Mature", "Light-hearted", "Serious"],
-        world: ["Premium", "Luxury", "Mass / Popular", "Desi", "International"],
+        world: ["Premium", "Luxury", "Mass / Popular", "International"],
         attributes: ["Crafted / Artisanal", "Modern / Contemporary", "Traditional / Heritage", "Innovative", "Other"]
       }
     },

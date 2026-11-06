@@ -16,7 +16,6 @@ export const section7 = {
         "Premium": addTranslations("Premium", "प्रीमियम", "பிரீமியம்", "ప్రీమియం", "પ્રીમિયમ"),
         "Luxury": addTranslations("Luxury", "लक्ज़री", "ஆடம்பர", "విలాసవంతమైన", "લક્ઝરી"),
         "MassPopular": addTranslations("Mass / Popular", "मास / लोकप्रिय", "மாஸ் / பிரபலமான", "మాస్ / ప్రసిద్ధ", "માસ / લોકપ્રિય"),
-        "Desi": addTranslations("Desi", "देसी", "தேசி", "దేశీ", "દેશી"),
         "International": addTranslations("International", "अंतर्राष्ट्रीय", "சர்வதேச", "అంతర్జాతీయ", "આંતરરાષ્ટ્રીય"),
       },
       // category_attributes removed

@@ -80,7 +80,7 @@ export const section3 = {
           "Young Boys — Traditional (Classic styles, cultural roots)",
           "Young Boys — Adventurous (Outdoors, sports, exploring)",
           "Young Boys — Leader of the pack (Confident, popular)",
-          "Young Boys — Boyfriend (Cafés, casual outings)",
+          "Young Boys — With girlfriend (Cafés, casual outings)",
           "Young Boys — Social, with friends (Hangouts, fun)",
           "Young Boys — Achiever (Academics, success-driven)",
           "Young Boys — Premium quality seeker (Prefers known brands)",
@@ -90,7 +90,7 @@ export const section3 = {
         young_men: [
           "Young Men — Traditional (Culturally rooted)",
           "Young Men — Adventurous (Outdoors, exploration)",
-          "Young Men — Boyfriend / Husband (Dating, shared activities)",
+          "Young Men — With girlfriend / wife (Dating, shared activities)",
           "Young Men — Social, with friends (Nightlife, hangouts)",
           "Young Men — Corporate (Work-focused style)",
           "Young Men — Achiever (Career-driven)",
