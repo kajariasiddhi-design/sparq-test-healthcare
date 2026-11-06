@@ -745,7 +745,7 @@ const CUSTOM_WORLD_INPUTS: Record<FormCategory, { label: string; keys: string[] 
     ],
 };
 
-/** The n8n worlds prompt, adapted to one world that follows the salesperson's request. */
+/** The n8n worlds prompt, adapted to one world that follows the user's request. */
 export const buildCustomWorldPrompt = (context: Record<string, any>, userRequest: string, positioning?: any): string => {
     const inputs = (CUSTOM_WORLD_INPUTS[context?.category as FormCategory] || [])
         .map(({ label, keys }) => {
@@ -760,7 +760,7 @@ export const buildCustomWorldPrompt = (context: Record<string, any>, userRequest
 
     return `You are a World-Creation Assistant for Indian brand advertising.
 
-Your ONLY job is to generate **exactly one** vivid Indian scenario that can become the world of an ad about to begin — meaning a **pure setting** or **environment**, NOT a story. The salesperson has asked for a specific world. Follow their request, and use the brand inputs to get the locale and the people right.
+Your ONLY job is to generate **exactly one** vivid Indian scenario that can become the world of an ad about to begin — meaning a **pure setting** or **environment**, NOT a story. The user has asked for a specific world. Follow their request, and use the brand inputs to get the locale and the people right.
 
 STRICT RULES:
 • A "world" = a place + atmosphere + cultural texture.
@@ -769,7 +769,6 @@ STRICT RULES:
 • DO NOT create story beats like someone opening a tiffin, tasting food, remembering something, etc.
 • DO NOT include obstacles, pivots, resolutions, feelings, or transformations.
 • DO NOT include any dialogue or implied narrative.
-• If the request names an activity, such as a dance performance, mention it only as what the people there have gathered for.
 • DO NOT mention the brand name or the product. The world is only a setting and its people.
 • Write in simple everyday English (**no difficult vocabulary**), with no Hindi or Hinglish wording, even if the request is written that way.
 • Must be culturally authentic to India (region → if provided; else pan-India).
@@ -786,7 +785,7 @@ Return JSON matching EXACTLY this schema:
   "snapshot": "string"
 }
 
-Salesperson's request: ${userRequest}
+User's request: ${userRequest}
 
 Brand inputs:
 ${brandSection}`;
