@@ -508,11 +508,10 @@ const RENAMED_PSYCHOGRAPHICS: Record<string, string> = {
 };
 const migratePsychographic = (title: string): string => RENAMED_PSYCHOGRAPHICS[title.trim()] || title;
 
-/** "Desi" is no longer a Brand World option, so past responses load without it. */
+/** "Regional" replaced the "Desi" Brand World options, so past responses load against the new wording. */
 const migrateBrandWorld = (value: any): string => {
     const world = safeStr(value).trim();
-    if (world === 'Desi') return '';
-    return world === 'Desi / Regional' ? 'Regional' : world;
+    return world === 'Desi' || world === 'Desi / Regional' ? 'Regional' : world;
 };
 
 export const parseArrayOrCsv = (value: any): string[] => {
@@ -687,6 +686,110 @@ export const describeFollowUps = (category: FormCategory, field: string, suggest
         if (rule.when) return rule.when.includes(option) ? `${option}: ${followUp}` : option;
         return followUp[option] ? `${option}: ${followUp[option]}` : option;
     }).join(', ');
+};
+
+/**
+ * Brand inputs for the custom world prompt, mirroring each category's n8n worlds prompt. `keys` are
+ * the app's payload names, tried in order, since a few differ from the names used in the n8n nodes.
+ */
+const CUSTOM_WORLD_INPUTS: Record<FormCategory, { label: string; keys: string[] }[]> = {
+    fmcg: [
+        { label: 'Brand Name', keys: ['Ad Brand', 'Brand Name'] },
+        { label: 'Product to Showcase', keys: ['Product to Showcase'] },
+        { label: 'Category', keys: ['Product Type', 'category'] },
+        { label: 'Region', keys: ['Primary Regions'] },
+        { label: 'Persona', keys: ["Consumer's View of Brand Persona"] },
+    ],
+    industrial: [
+        { label: 'Brand Name', keys: ['Ad Brand', 'Brand Name'] },
+        { label: 'Product to Showcase', keys: ['Product to Showcase'] },
+        { label: 'Category', keys: ['Product Type', 'category'] },
+        { label: 'Region', keys: ['Primary Regions'] },
+        { label: 'Persona', keys: ["Consumer's View of Brand Persona"] },
+    ],
+    lifestyle: [
+        { label: 'Product to Showcase', keys: ['Product to Showcase'] },
+        { label: 'Category', keys: ['Product Sub-category', 'category'] },
+        { label: 'Primary Regions', keys: ['Primary Regions'] },
+        { label: 'User (Consumer) – Income', keys: ['Consumer - Income'] },
+        { label: 'User (Consumer) – Geography', keys: ['Consumer - Geography'] },
+        { label: 'Buyer (Customer) – Age', keys: ['Customer - Age'] },
+        { label: 'Buyer (Customer) – Gender', keys: ['Customer - Gender'] },
+        { label: 'Lifestyle & Beliefs (psychographics)', keys: ['Lifestyle & Beliefs'] },
+        { label: 'Desired Brand Worlds', keys: ['Desired Brand World'] },
+    ],
+    retail: [
+        { label: 'Primary Categories', keys: ['Primary Categories'] },
+        { label: 'Store Count and Regions', keys: ['Store Count and Regions'] },
+        { label: 'Primary Regions', keys: ['Primary Regions'] },
+        { label: 'Shopper – Age', keys: ['Shopper - Age'] },
+        { label: 'Shopper – Gender', keys: ['Shopper - Gender'] },
+        { label: 'Shopper – Income', keys: ['Shopper - Income'] },
+        { label: 'Shopper – Geography', keys: ['Shopper - Geography'] },
+        { label: 'Shopper Lifestyle', keys: ['Shopper Lifestyle'] },
+        { label: 'Typical Shopper/Decision Maker', keys: ['Shopping Company'] },
+        { label: 'Desired Brand Worlds', keys: ['Desired Brand World'] },
+    ],
+    healthcare: [
+        { label: 'Primary Specialties / Medical Services', keys: ['Primary Specialties / Medical Services'] },
+        { label: 'Main Treatments Patients Come For', keys: ['Main Treatments'] },
+        { label: 'Hospital / Clinic Count and Regions', keys: ['Hospital / Clinic Count and Regions'] },
+        { label: 'Patient – Age', keys: ['Patient - Age'] },
+        { label: 'Patient – Gender', keys: ['Patient - Gender'] },
+        { label: 'Patient – Income', keys: ['Patient - Income'] },
+        { label: 'Patient – Geography', keys: ['Patient - Geography'] },
+        { label: 'Where Most Patients Come From', keys: ['Patient - Comes From'] },
+        { label: "Decision Makers' Lifestyle & Beliefs", keys: ['Decision Maker Lifestyle'] },
+        { label: 'Who Usually Accompanies the Patient', keys: ['Accompanied By'] },
+        { label: 'Desired Brand World', keys: ['Desired Brand World'] },
+    ],
+};
+
+/** The n8n worlds prompt, adapted to one world that follows the salesperson's request. */
+export const buildCustomWorldPrompt = (context: Record<string, any>, userRequest: string, positioning?: any): string => {
+    const inputs = (CUSTOM_WORLD_INPUTS[context?.category as FormCategory] || [])
+        .map(({ label, keys }) => {
+            const key = keys.find(k => safeStr(context[k]).trim());
+            return key ? `${label}: ${safeStr(context[key]).trim()}` : '';
+        })
+        .filter(Boolean);
+    const positioningText = safeStr(typeof positioning === 'object' ? positioning?.english_positioning : positioning).trim();
+    const brandSection = inputs.length > 0
+        ? inputs.join('\n')
+        : positioningText ? `Positioning: ${positioningText}` : 'No brand inputs are available. Default to a generic Indian setting.';
+
+    return `You are a World-Creation Assistant for Indian brand advertising.
+
+Your ONLY job is to generate **exactly one** vivid Indian scenario that can become the world of an ad about to begin — meaning a **pure setting** or **environment**, NOT a story. The salesperson has asked for a specific world. Follow their request, and use the brand inputs to get the locale and the people right.
+
+STRICT RULES:
+• A "world" = a place + atmosphere + cultural texture.
+• DO NOT describe hooks, emotions, or product usage.
+• **Mention** the characters likely to be found in the world.
+• DO NOT create story beats like someone opening a tiffin, tasting food, remembering something, etc.
+• DO NOT include obstacles, pivots, resolutions, feelings, or transformations.
+• DO NOT include any dialogue or implied narrative.
+• If the request names an activity, such as a dance performance, mention it only as what the people there have gathered for.
+• DO NOT mention the brand name or the product. The world is only a setting and its people.
+• Write in simple everyday English (**no difficult vocabulary**), with no Hindi or Hinglish wording, even if the request is written that way.
+• Must be culturally authentic to India (region → if provided; else pan-India).
+• The world must be **1–2 sentences maximum**, focusing ONLY on the scene/environment with 20-30 words only.
+
+FORMAT RULES:
+• Return ONLY the JSON object matching the schema below.
+• The "label" = short title for the world (e.g., "The Village Courtyard").
+• The "snapshot" = 1–2 sentences describing ONLY the environment with 20-30 words only.
+
+Return JSON matching EXACTLY this schema:
+{
+  "label": "string",
+  "snapshot": "string"
+}
+
+Salesperson's request: ${userRequest}
+
+Brand inputs:
+${brandSection}`;
 };
 
 /**

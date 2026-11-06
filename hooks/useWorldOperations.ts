@@ -11,7 +11,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { World, BrandDescriptionResponse } from '../types';
 import { callGemini3, callGemini3Image, callGeminiFlashLite, callOpenRouterImage } from '../utils/api';
 import { GEMINI_API_KEY, OPENROUTER_API_KEY, WEBHOOK_ACTIONS } from '../constants';
-import { extractArrayFromWebhookResponse, getTargetAudience } from '../utils';
+import { extractArrayFromWebhookResponse, getTargetAudience, buildCustomWorldPrompt } from '../utils';
 
 interface UseWorldOperationsProps {
     getFullContext: () => any;
@@ -188,22 +188,16 @@ Output JSON only (no markdown):
         setIsGeneratingCustomWorld(true);
         setError(null);
         try {
-            const prompt = `
-        Create a single "World" definition based on this user request: "${userPrompt}". The world should be Indian. Use simple Indian colloquial language words to describe it.
-        Output JSON format:
-        {
-          "title": "Title",
-          "description": "Description in less than 10 words",
-          "why_it_fits": "Why it fits in less than 10 words"
-        }
-      `;
+            const prompt = buildCustomWorldPrompt(getFullContext() || {}, userPrompt, brandDescriptionResponse?.positioning);
             const response = await callGemini3(prompt, GEMINI_API_KEY);
             const cleanResponse = response.replace(/```json/g, '').replace(/```/g, '').trim();
             const newWorldData = JSON.parse(cleanResponse);
 
             const newWorld: World = {
                 id: `custom_${Date.now()}`,
-                ...newWorldData
+                title: newWorldData.label || 'Untitled World',
+                description: newWorldData.snapshot || '',
+                isCustom: true
             };
 
             setWorlds(prev => [...prev, newWorld]);
@@ -214,7 +208,7 @@ Output JSON only (no markdown):
         } finally {
             setIsGeneratingCustomWorld(false);
         }
-    }, [setError]);
+    }, [getFullContext, brandDescriptionResponse, setError]);
 
     const handleWorldEditToggle = useCallback((worldId: string, isEditing: boolean) => {
         setWorlds(prev => prev.map(w => w.id === worldId ? { ...w, isEditing, originalWorld: isEditing ? structuredClone(w) : undefined } : w));
