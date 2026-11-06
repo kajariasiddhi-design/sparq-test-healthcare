@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
+import { acceptWithFollowUps, describeFollowUps } from '../utils';
 import { LifestyleFormData, UploadedImage, LifestyleFormSuggestions, Language, TranscribedClip } from '../types';
 import { lifestyleFormTranslations } from '../data/lifestyleTranslations';
 import { formTranslations, translations } from '../data/translations';
@@ -186,7 +187,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                         />
                     </SuggestedInput>
 
-                    <SuggestedInput lang={lang} suggestion={suggestions.subCategory} onAccept={(val) => update('subCategory', val)}>
+                    <SuggestedInput lang={lang} suggestion={suggestions.subCategory} displayValue={describeFollowUps('lifestyle', 'subCategory', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'subCategory', val, suggestions as any, update)}>
                         <Label lang={lang} text={section1.q1_4.subCategory} required />
                         <MultiChips
                             lang={lang}
@@ -397,12 +398,14 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
 
                                 <div>
                                     <Label lang={lang} text={section3.q3B.sub_question} className="text-[15px]" />
+                                    <SuggestedInput lang={lang} suggestion={(suggestions as any).otherCustomerSegment} displayValue={describeFollowUps('lifestyle', 'otherCustomerSegment', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'otherCustomerSegment', val, suggestions as any, update)}>
                                     <SingleChips
                                         lang={lang}
                                         options={section3.q3B.sub_options}
                                         value={form.otherCustomerSegment || ''}
                                         onChange={(val) => update('otherCustomerSegment', val)}
                                     />
+                                    </SuggestedInput>
                                     {form.otherCustomerSegment === 'Others' && (
                                         <div className="mt-3">
                                             <TextInput
@@ -518,7 +521,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             />
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingCompany} onAccept={(val) => update('shoppingCompany', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingCompany} displayValue={describeFollowUps('lifestyle', 'shoppingCompany', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'shoppingCompany', val, suggestions as any, update)}>
                             <Label qIndex="4.3" lang={lang} text={section4.q4_3.text} />
                             <MultiChips
                                 lang={lang}
@@ -667,7 +670,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                                     </div>
                                 </SuggestedInput>
 
-                                <SuggestedInput lang={lang} suggestion={suggestions.desiredAttributes} onAccept={(val) => update('desiredAttributes', val)}>
+                                <SuggestedInput lang={lang} suggestion={suggestions.desiredAttributes} displayValue={describeFollowUps('lifestyle', 'desiredAttributes', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'desiredAttributes', val, suggestions as any, update)}>
                                     <div className="flex flex-wrap items-start gap-x-8 gap-y-2">
                                         <Label lang={lang} text={section7.q7_1.attributes} className="text-sm font-semibold text-indigo-900/70 min-w-[100px] mt-1" />
                                         <div className="flex-1 space-y-3">
@@ -702,7 +705,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             </div>
                         </div>
 
-                                                <SuggestedInput lang={lang} suggestion={suggestions.brandAsPerson} onAccept={(val) => update('brandAsPerson', val)}>
+                                                <SuggestedInput lang={lang} suggestion={suggestions.brandAsPerson} displayValue={describeFollowUps('lifestyle', 'brandAsPerson', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'brandAsPerson', val, suggestions as any, update)}>
                             <Label qIndex="7.2" lang={lang} text={section7.q7_2.text} />
                             <div className="mt-3">
                                 <SingleChips
@@ -725,7 +728,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adObjectives} onAccept={(val) => update('adObjectives', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.adObjectives} displayValue={describeFollowUps('lifestyle', 'adObjectives', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'adObjectives', val, suggestions as any, update)}>
                             <Label qIndex="7.3" lang={lang} text={section7.q7_3.text} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -765,7 +768,7 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} onAccept={(val) => update('adImportantMessages', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} displayValue={describeFollowUps('lifestyle', 'adImportantMessages', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'adImportantMessages', val, suggestions as any, update)}>
                             <Label qIndex="7.4" lang={lang} text={section7.q7_4.text} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -820,12 +823,14 @@ const LifestyleForm: React.FC<LifestyleFormProps> = ({
                         <div>
                             <Label qIndex="7.6" lang={lang} text={section7.q7_6.text} />
                             <div className="mt-3">
+                                <SuggestedInput lang={lang} suggestion={(suggestions as any).featureFounderEmployee} displayValue={describeFollowUps('lifestyle', 'featureFounderEmployee', suggestions as any)} onAccept={(val) => acceptWithFollowUps('lifestyle', 'featureFounderEmployee', val, suggestions as any, update)}>
                                 <SingleChips
                                     lang={lang}
                                     options={section7.q7_6.options}
                                     value={form.featureFounderEmployee}
                                     onChange={(val) => update('featureFounderEmployee', val)}
                                 />
+                                </SuggestedInput>
                                 {form.featureFounderEmployee === 'Yes' && (
                                     <div className="mt-3">
                                         <TextInput

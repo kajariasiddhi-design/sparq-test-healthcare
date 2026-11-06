@@ -8,6 +8,7 @@
  */
 
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { acceptWithFollowUps, describeFollowUps } from '../utils';
 import { NewFormData, UploadedImage, FormSuggestions, Language, TranscribedClip } from '../types';
 import { formTranslations, translations } from '../data/translations';
 import { psychographicOptions } from '../data/psychographics';
@@ -119,7 +120,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                 update('adFocusDetails', suggestions.adFocusDetails);
             }
         } else {
-            update(fieldId, suggestion);
+            acceptWithFollowUps('fmcg', fieldId, suggestion, suggestions, update);
         }
     };
 
@@ -430,7 +431,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                             </div>
                             <div>
                                 <Label text={formTranslations.section7.q7_1.category_attributes} lang={lang} />
-                                <SuggestedInput suggestion={suggestions.desiredImageryAttributes} onAccept={(s) => handleAcceptSuggestion('desiredImageryAttributes', s)} lang={lang}>
+                                <SuggestedInput suggestion={suggestions.desiredImageryAttributes} displayValue={describeFollowUps('fmcg', 'desiredImageryAttributes', suggestions)} onAccept={(s) => handleAcceptSuggestion('desiredImageryAttributes', s)} lang={lang}>
                                     <MultiChips options={formTranslations.section7.q7_1.options_attributes} value={form.desiredImageryAttributes} onChange={v => update('desiredImageryAttributes', v)} lang={lang} maxSelections={2} />
                                 </SuggestedInput>
                             </div>
@@ -441,7 +442,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                     </div>
                     <div>
                         <Label qIndex="7.2" text={formTranslations.section7.q7_2.text} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.consumerViewPersona} onAccept={(s) => handleAcceptSuggestion('consumerViewPersona', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.consumerViewPersona} displayValue={describeFollowUps('fmcg', 'consumerViewPersona', suggestions)} onAccept={(s) => handleAcceptSuggestion('consumerViewPersona', s)} lang={lang}>
                             <SingleChips options={formTranslations.section7.q7_2.options} value={form.consumerViewPersona} onChange={v => update('consumerViewPersona', v)} lang={lang} />
                         </SuggestedInput>
                         {form.consumerViewPersona === 'Other' && (
@@ -450,7 +451,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                     </div>
                     <div>
                         <Label qIndex="7.3" text={formTranslations.section7.q7_4.text} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.adObjectives} onAccept={(s) => handleAcceptSuggestion('adObjectives', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.adObjectives} displayValue={describeFollowUps('fmcg', 'adObjectives', suggestions)} onAccept={(s) => handleAcceptSuggestion('adObjectives', s)} lang={lang}>
                             <MultiChips options={formTranslations.section7.q7_4.options} value={form.adObjectives || []} onChange={handleAdObjectivesChange} lang={lang} maxSelections={2} />
                         </SuggestedInput>
                         {(form.adObjectives || []).length > 0 && (
@@ -471,7 +472,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                     </div>
                     <div>
                         <Label qIndex="7.4" text={formTranslations.section7.q7_5.text} hint={formTranslations.section7.q7_5.hint} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.adFocus} onAccept={(s) => handleAcceptSuggestion('adFocus', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.adFocus} displayValue={describeFollowUps('fmcg', 'adFocus', suggestions)} onAccept={(s) => handleAcceptSuggestion('adFocus', s)} lang={lang}>
                             <MultiChips options={formTranslations.section7.q7_5.options} value={form.adFocus || []} onChange={handleAdFocusChange} lang={lang} maxSelections={2} />
                         </SuggestedInput>
 

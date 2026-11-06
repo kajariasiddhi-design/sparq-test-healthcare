@@ -42,6 +42,9 @@ import {
   mapRawDataToLifestyleFormData,
   mapRawDataToRetailFormData,
   mapRawDataToHealthcareFormData,
+  buildFollowUpInstructions,
+  cleanFollowUpSuggestions,
+  FormCategory,
   inferCategory,
   mapRawDataToIndustrialFormData
 } from './utils';
@@ -628,7 +631,7 @@ function App() {
     });
   }, []);
 
-  const handleSampleSelect = useCallback((data: any, name: MultilingualText, cat: 'fmcg' | 'industrial' | 'lifestyle' | 'retail') => {
+  const handleSampleSelect = useCallback((data: any, name: MultilingualText, cat: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare') => {
     // Deep clone to avoid mutating original data
     const processedData = JSON.parse(JSON.stringify(data));
     
@@ -660,6 +663,8 @@ function App() {
       setLifestyleForm(processedData);
     } else if (cat === 'retail') {
       setRetailForm(processedData);
+    } else if (cat === 'healthcare') {
+      setHealthcareForm(processedData);
     }
     setLoadedNotification(`${translations.loadResponsesModal.loadedNotification[lang]} ${name[lang] || name.en}`);
     setTimeout(() => setLoadedNotification(null), 3000);
@@ -1341,13 +1346,13 @@ function App() {
         'adObjectiveDetails', 'adFocusDetails'
       );
     } else if (category === 'lifestyle') {
-      relevantKeys = relevantKeys.filter(k => !['emotionalOutcomeManual', 'adMessageDetails', 'shoppingCompanyOtherBrief'].includes(k));
+      relevantKeys = relevantKeys.filter(k => !['emotionalOutcomeManual'].includes(k));
       relevantKeys.push('adObjectiveDetails');
     } else if (category === 'retail') {
-      relevantKeys = relevantKeys.filter(k => !['shopperFeelManual', 'adMessageDetails', 'shoppingCompanyOther', 'otherCustomerSegmentBrief'].includes(k));
+      relevantKeys = relevantKeys.filter(k => !['shopperFeelManual'].includes(k));
       relevantKeys.push('adObjectiveDetails');
     } else if (category === 'healthcare') {
-      relevantKeys = relevantKeys.filter(k => !['adMessageDetails', 'companionsOther', 'otherCustomerSegmentBrief', 'treatmentsOther', 'facilityListLink'].includes(k));
+      relevantKeys = relevantKeys.filter(k => !['facilityListLink'].includes(k));
     }
 
     let optionsContext = "";
@@ -1390,6 +1395,9 @@ function App() {
         - desiredAttributes: ${ls7.q7_1.options.attributes.join(', ')}
         - brandAsPerson: ${ls7.q7_2.options.join(', ')}
         - adObjectives: ${ls7.q7_3.options.join(', ')}
+        - adImportantMessages: ${ls7.q7_4.options.join(', ')}
+        - otherCustomerSegment: ${Object.keys(ls3.q3B.sub_options).join(', ')}
+        - featureFounderEmployee: Yes, No
 
         For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
         `;
@@ -1411,7 +1419,9 @@ function App() {
         - desiredWorld: ${r7.q7_1.options.world.join(', ')}
         - storeAsPerson: ${r7.q7_2.options.join(', ')}
         - adObjectives: ${r7.q7_3.options.join(', ')}
-        - adFocus: ${r7.q7_4.options.join(', ')}
+        - adImportantMessages: ${r7.q7_4.options.join(', ')}
+        - otherCustomerSegment: ${Object.keys(r3.q3B.options).join(', ')}
+        - ongoingOffer: Yes, No
 
         For 'adObjectiveDetails', provide a JSON object where keys are the selected objectives and values are specific details mentioned in the transcript (if any).
         `;
@@ -1427,7 +1437,7 @@ function App() {
         - patientGeography: ${Object.keys(h3.geoOptions).join(', ')}
         - otherCustomerSegment: ${Object.keys(h3.q3B.options).join(', ')}
         - specialtyScope: ${Object.keys(h3.q3_2.scopeOptions).join(', ')}
-        - treatments: ${Object.keys(h3.q3_2.options).join(', ')}
+        - treatments: ${Object.keys(h3.q3_2.options).join(', ')}, Others
         - decisionMakerLifestyle (up to 3): ${h3.q3_3.options.map(o => o.value).join(' | ')}
         - companions: ${Object.keys(h3.q3_4.options).join(', ')}
         - desiredTone: ${h6.q6_1.options.tone.join(', ')}
@@ -1468,6 +1478,8 @@ function App() {
     const prompt = `You are a form-filling assistant. Based on the following transcript of a conversation with a brand owner, extract information and fill in values for ALL the JSON keys listed below. The output MUST be a valid JSON object. Do not include any text before or after the JSON object.
     
 ${optionsContext}
+
+${buildFollowUpInstructions(category as FormCategory)}
 
 For all remaining text-based keys not listed above, extract the most relevant information directly from the transcript. Provide a value for each key wherever the transcript contains relevant information. Do not skip text fields even if they are not in the constrained list above - if the transcript mentions something relevant to a key, fill it in. Return an empty string only if the transcript genuinely has no information for that key.
 
@@ -1545,7 +1557,7 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         // Retail
         'shopperAge', 'shopperIncome', 'shopperGeography', 'shopperLifestyle', 'shoppingOccasion', 'primaryCategories',
         // Healthcare
-        'patientAge', 'patientIncome', 'patientOrigin', 'patientGeography', 'treatments', 'decisionMakerLifestyle', 'companions', 'adImportantMessages'
+        'patientAge', 'patientIncome', 'patientOrigin', 'patientGeography', 'treatments', 'companions', 'adImportantMessages'
       ];
 
       const singleFields = [
@@ -1557,10 +1569,10 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         // Retail
         'shopperGender', 'storeAsPerson',
         // Healthcare
-        'patientGender', 'hospitalAsPerson', 'specialtyScope', 'otherCustomerSegment'
+        'patientGender', 'hospitalAsPerson', 'specialtyScope', 'otherCustomerSegment', 'ongoingOffer', 'featureFounderEmployee'
       ];
 
-      const objectFields = ['adObjectiveDetails', 'adFocusDetails'];
+      const objectFields = ['adObjectiveDetails', 'adFocusDetails', 'adMessageDetails'];
 
       for (const key in parsedSuggestions) {
         if (arrayFields.includes(key)) {
@@ -1572,7 +1584,7 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
         }
       }
 
-      setSuggestions(parsedSuggestions);
+      setSuggestions(cleanFollowUpSuggestions(category as FormCategory, parsedSuggestions));
 
     } catch (err) {
       console.error("AI analysis failed:", err);

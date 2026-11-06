@@ -170,7 +170,7 @@ export const SuggestedInput: React.FC<{
         </div>
         <p className="text-[13px] text-indigo-900 flex-1 leading-snug">
           <strong className="font-bold uppercase tracking-tighter text-[11px] block text-indigo-700"><TranslatedText lang={lang} text={formTranslations.audio.suggestionTitle} /></strong>
-          <span className="line-clamp-2">{displaySuggestion}</span>
+          <span className={displayValue ? undefined : "line-clamp-2"}>{displaySuggestion}</span>
         </p>
         <button
           type="button"

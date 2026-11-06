@@ -1,10 +1,10 @@
 import { MultilingualText } from '../types';
 import { addTranslations } from './translation-utils';
-import { getInitialFormData, getInitialIndustrialFormData, getInitialLifestyleFormData, getInitialRetailFormData } from '../utils';
+import { getInitialFormData, getInitialIndustrialFormData, getInitialLifestyleFormData, getInitialRetailFormData, getInitialHealthcareFormData } from '../utils';
 
 // The data structure is now 'any' to accommodate MultilingualText objects 
 // for fields that are strings in NewFormData. The App component will handle mapping these.
-export const NEW_SAMPLE_PROFILES: { name: MultilingualText, data: any, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' }[] = [
+export const NEW_SAMPLE_PROFILES: { name: MultilingualText, data: any, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' }[] = [
     {
         name: addTranslations("Zudio", "à¤œà¤¼à¥‚à¤¡à¤¿à¤¯à¥‹", "à®œà¯‚à®Ÿà®¿à®¯à¯‹", "à®œà±‚à°¡à°¿à°¯à±‹", "àª�à«�àª¡àª¿àª¯à«‹"),
         category: 'lifestyle',
@@ -164,7 +164,7 @@ export const NEW_SAMPLE_PROFILES: { name: MultilingualText, data: any, category:
         }
     },
     {
-        name: addTranslations("Prakom Doors (Industrial)", "à¤ªà¥�à¤°à¤¾à¤•à¥‰à¤® à¤¡à¥‹à¤°à¥�à¤¸ (à¤”à¤¦à¥�à¤¯à¥‹à¤—à¤¿à¤•)", "à®ªà®¿à®°à®•à¯‹à®®à¯� à®Ÿà¯‹à®°à¯�à®¸à¯� (à®¤à¯Šà®´à®¿à®²à¯�à®¤à¯�à®±à¯ˆ)", "à°ªà±�à°°à°¾à°•à±‹à°®à±� à°¡à±‹à°°à±�à°¸à±� (à°ªà°¾à°°à°¿à°¶à±�à°°à°¾à°®à°¿à°•)", "àªªà«�àª°àª¾àª•à«‹àª® àª¡à«‹àª°à«�àª¸ (àª”àª¦à«�àª¯à«‹àª—àª¿àª•)"),
+        name: addTranslations("Prakom UPVC", "प्राकॉम यूपीवीसी", "பிராகாம் யூபிவிசி", "ప్రాకామ్ యూపీవీసీ", "પ્રાકોમ યુપીવીસી"),
         category: 'industrial',
         data: {
             ...getInitialIndustrialFormData(),
@@ -202,6 +202,47 @@ export const NEW_SAMPLE_PROFILES: { name: MultilingualText, data: any, category:
             competitors: addTranslations("Fenesta\nLG Hausys\nLocal fabricators", "à¤«à¥‡à¤¨à¥‡à¤¸à¥�à¤Ÿà¤¾\nà¤�à¤²à¤œà¥€ à¤¹à¤¾à¤‰à¤¸à¥‡à¤¸\nà¤¸à¥�à¤¥à¤¾à¤¨à¥€à¤¯ à¤«à¥ˆà¤¬à¥�à¤°à¤¿à¤•à¥‡à¤Ÿà¤°", "à®ƒà®ªà¯†à®©à¯†à®¸à¯�à®Ÿà®¾\nà®Žà®²à¯�à®œà®¿ à®¹à®µà¯�à®šà®¿à®¸à¯�\nà®‰à®³à¯�à®³à¯‚à®°à¯� à®ƒà®ªà¯‡à®ªà¯�à®°à®¿à®•à¯‡à®Ÿà¯�à®Ÿà®°à¯�à®•à®³à¯�", "à°«à±†à°¨à±†à°¸à±�à°Ÿà°¾\nà°Žà°²à±�â€Œà°œà°¿ à°¹à±Œà°¸à°¿à°¸à±�\nà°¸à±�à°¥à°¾à°¨à°¿à°• à°«à±�à°¯à°¾à°¬à±�à°°à°¿à°•à±‡à°Ÿà°°à±�à°²à±�", "àª«à«‡àª¨à«‡àª¸à«�àªŸàª¾\nàª�àª²àªœà«€ àª¹àª¾àª‰àª¸àª¿àª¸à«�\nàª¸à«�àª¥àª¾àª¨àª¿àª• àª«à«‡àª¬à«�àª°àª¿àª•à«‡àªŸàª°à«�àª¸"),
             packagingDetails: addTranslations("Protective film on all profiles to prevent scratches during transport and installation. Corner guards for safety.", "à¤ªà¤°à¤¿à¤µà¤¹à¤¨ à¤”à¤° à¤¸à¥�à¤¥à¤¾à¤ªà¤¨à¤¾ à¤•à¥‡ à¤¦à¥Œà¤°à¤¾à¤¨ à¤–à¤°à¥‹à¤‚à¤š à¤•à¥‹ à¤°à¥‹à¤•à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤� à¤¸à¤­à¥€ à¤ªà¥�à¤°à¥‹à¤«à¤¾à¤‡à¤² à¤ªà¤° à¤¸à¥�à¤°à¤•à¥�à¤·à¤¾à¤¤à¥�à¤®à¤• à¤«à¤¿à¤²à¥�à¤®à¥¤ à¤¸à¥�à¤°à¤•à¥�à¤·à¤¾ à¤•à¥‡ à¤²à¤¿à¤� à¤•à¥‰à¤°à¥�à¤¨à¤° à¤—à¤¾à¤°à¥�à¤¡à¥¤", "à®ªà¯‹à®•à¯�à®•à¯�à®µà®°à®¤à¯�à®¤à¯� à®®à®±à¯�à®±à¯�à®®à¯� à®¨à®¿à®±à¯�à®µà®²à®¿à®©à¯� à®ªà¯‹à®¤à¯� à®•à¯€à®±à®²à¯�à®•à®³à¯ˆà®¤à¯� à®¤à®Ÿà¯�à®•à¯�à®• à®…à®©à¯ˆà®¤à¯�à®¤à¯� à®šà¯�à®¯à®µà®¿à®µà®°à®™à¯�à®•à®³à®¿à®²à¯�à®®à¯� à®ªà®¾à®¤à¯�à®•à®¾à®ªà¯�à®ªà¯�à®ªà¯� à®ªà®Ÿà®®à¯�. à®ªà®¾à®¤à¯�à®•à®¾à®ªà¯�à®ªà¯�à®•à¯�à®•à®¾à®• à®®à¯‚à®²à¯ˆà®•à¯�à®•à®¾à®µà®²à®°à¯�à®•à®³à¯�.", "à°°à°µà°¾à°£à°¾ à°®à°°à°¿à°¯à±� à°‡à°¨à±�â€Œà°¸à±�à°Ÿà°¾à°²à±‡à°·à°¨à±� à°¸à°®à°¯à°‚à°²à±‹ à°—à±€à°¤à°²à°¨à±� à°¨à°¿à°µà°¾à°°à°¿à°‚à°šà°¡à°¾à°¨à°¿à°•à°¿ à°…à°¨à±�à°¨à°¿ à°ªà±�à°°à±Šà°«à±ˆà°²à±�â€Œà°²à°ªà±ˆ à°°à°•à±�à°·à°£à°¾à°¤à±�à°®à°• à°«à°¿à°²à±�à°®à±�. à°­à°¦à±�à°°à°¤ à°•à±‹à°¸à°‚ à°•à°¾à°°à±�à°¨à°°à±� à°—à°¾à°°à±�à°¡à±�à°¸à±�.", "àªªàª°àª¿àªµàª¹àª¨ àª…àª¨à«‡ àª‡àª¨à«�àª¸à«�àªŸà«‹àª²à«‡àª¶àª¨ àª¦àª°àª®àª¿àª¯àª¾àª¨ àª¸à«�àª•à«�àª°à«‡àªšàª¨à«‡ àª°à«‹àª•àªµàª¾ àª®àª¾àªŸà«‡ àª¤àª®àª¾àª® àªªà«�àª°à«‹àª«àª¾àª‡àª²à«�àª¸ àªªàª° àª°àª•à«�àª·àª£àª¾àª¤à«�àª®àª• àª«àª¿àª²à«�àª®. àª¸àª²àª¾àª®àª¤à«€ àª®àª¾àªŸà«‡ àª•à«‹àª°à«�àª¨àª° àª—àª¾àª°à«�àª¡à«�àª¸."),
             productAppearance: addTranslations("The ad should show the doors and windows installed in beautiful, modern homes, emphasizing their sleek look and smooth operation. Close-ups on the locking mechanism and finish.", "à¤µà¤¿à¤œà¥�à¤žà¤¾à¤ªà¤¨ à¤®à¥‡à¤‚ à¤¸à¥�à¤‚à¤¦à¤°, à¤†à¤§à¥�à¤¨à¤¿à¤• à¤˜à¤°à¥‹à¤‚ à¤®à¥‡à¤‚ à¤¸à¥�à¤¥à¤¾à¤ªà¤¿à¤¤ à¤¦à¤°à¤µà¤¾à¤œà¥‡ à¤”à¤° à¤–à¤¿à¤¡à¤¼à¤•à¤¿à¤¯à¤¾à¤‚ à¤¦à¤¿à¤–à¤¾à¤¨à¥€ à¤šà¤¾à¤¹à¤¿à¤�, à¤‰à¤¨à¤•à¥‡ à¤†à¤•à¤°à¥�à¤·à¤• à¤°à¥‚à¤ª à¤”à¤° à¤¸à¤¹à¤œ à¤¸à¤‚à¤šà¤¾à¤²à¤¨ à¤ªà¤° à¤œà¥‹à¤° à¤¦à¥‡à¤¨à¤¾ à¤šà¤¾à¤¹à¤¿à¤�à¥¤ à¤²à¥‰à¤•à¤¿à¤‚à¤— à¤¤à¤‚à¤¤à¥�à¤° à¤”à¤° à¤«à¤¿à¤¨à¤¿à¤¶ à¤ªà¤° à¤•à¥�à¤²à¥‹à¤œ-à¤…à¤ªà¥¤", "à®µà®¿à®³à®®à¯�à®ªà®°à®®à¯� à®…à®´à®•à®¾à®©, à®¨à®µà¯€à®© à®µà¯€à®Ÿà¯�à®•à®³à®¿à®²à¯� à®¨à®¿à®±à¯�à®µà®ªà¯�à®ªà®Ÿà¯�à®Ÿ à®•à®¤à®µà¯�à®•à®³à¯� à®®à®±à¯�à®±à¯�à®®à¯� à®œà®©à¯�à®©à®²à¯�à®•à®³à¯ˆà®•à¯� à®•à®¾à®Ÿà¯�à®Ÿ à®µà¯‡à®£à¯�à®Ÿà¯�à®®à¯�, à®…à®µà®±à¯�à®±à®¿à®©à¯� à®¨à¯‡à®°à¯�à®¤à¯�à®¤à®¿à®¯à®¾à®© à®¤à¯‹à®±à¯�à®±à®®à¯� à®®à®±à¯�à®±à¯�à®®à¯� à®®à¯†à®©à¯�à®®à¯ˆà®¯à®¾à®© à®šà¯†à®¯à®²à¯�à®ªà®¾à®Ÿà¯�à®Ÿà¯ˆ à®µà®²à®¿à®¯à¯�à®±à¯�à®¤à¯�à®¤à¯�à®•à®¿à®±à®¤à¯�. à®ªà¯‚à®Ÿà¯�à®Ÿà¯�à®¤à®²à¯� à®ªà¯Šà®±à®¿à®®à¯�à®±à¯ˆ à®®à®±à¯�à®±à¯�à®®à¯� à®ªà¯‚à®šà¯�à®šà¯� à®®à¯€à®¤à¯� à®¨à¯†à®°à¯�à®•à¯�à®•à®®à®¾à®© à®•à®¾à®Ÿà¯�à®šà®¿à®•à®³à¯�.", "à°ªà±�à°°à°•à°Ÿà°¨à°²à±‹ à°…à°‚à°¦à°®à±ˆà°¨, à°†à°§à±�à°¨à°¿à°• à°—à±ƒà°¹à°¾à°²à°²à±‹ à°…à°®à°°à±�à°šà°¿à°¨ à°¤à°²à±�à°ªà±�à°²à±� à°®à°°à°¿à°¯à±� à°•à°¿à°Ÿà°¿à°•à±€à°²à°¨à±� à°šà±‚à°ªà°¾à°²à°¿, à°µà°¾à°Ÿà°¿ à°¸à±Šà°—à°¸à±ˆà°¨ à°°à±‚à°ªà°¾à°¨à±�à°¨à°¿ à°®à°°à°¿à°¯à±� à°¸à±�à°¨à±�à°¨à°¿à°¤à°®à±ˆà°¨ à°†à°ªà°°à±‡à°·à°¨à±�â€Œà°¨à±� à°¨à±Šà°•à±�à°•à°¿ à°šà±†à°ªà±�à°ªà°¾à°²à°¿. à°²à°¾à°•à°¿à°‚à°—à±� à°®à±†à°•à°¾à°¨à°¿à°œà°‚ à°®à°°à°¿à°¯à±� à°«à°¿à°¨à°¿à°·à°¿à°‚à°—à±�â€Œà°ªà±ˆ à°•à±�à°²à±‹à°œà°ªà±�à°¸à±�.", "àªœàª¾àª¹à«‡àª°àª¾àª¤àª®àª¾àª‚ àª¸à«�àª‚àª¦àª°, àª†àª§à«�àª¨àª¿àª• àª˜àª°à«‹àª®àª¾àª‚ àª¸à«�àª¥àª¾àªªàª¿àª¤ àª¦àª°àªµàª¾àªœàª¾ àª…àª¨à«‡ àª¬àª¾àª°à«€àª“ àª¬àª¤àª¾àªµàªµà«€ àªœà«‹àªˆàª�, àª¤à«‡àª®àª¨àª¾ àª†àª•àª°à«�àª·àª• àª¦à«‡àª–àª¾àªµ àª…àª¨à«‡ àª¸àª°àª³ àª•àª¾àª®àª—à«€àª°à«€ àªªàª° àª­àª¾àª° àª®à«‚àª•àªµà«‹ àªœà«‹àªˆàª�. àª²à«‹àª•àª¿àª‚àª— àª®àª¿àª•à«‡àª¨àª¿àª�àª® àª…àª¨à«‡ àª«àª¿àª¨àª¿àª· àªªàª° àª•à«�àª²à«‹àªœ-àª…àªªà«�àª¸."),
+        }
+    },
+    {
+        name: addTranslations("Sterling Hospital", "स्टर्लिंग हॉस्पिटल", "ஸ்டெர்லிங் மருத்துவமனை", "స్టెర్లింగ్ హాస్పిటల్", "સ્ટર્લિંગ હોસ્પિટલ"),
+        category: 'healthcare',
+        data: {
+            ...getInitialHealthcareFormData(),
+            brandSpecial: "One of the oldest chains of corporate hospitals\nAll the advanced technology\nLeaders in kidney transplants",
+            hospitalName: "Sterling Hospitals",
+            facilityCountRegions: "6 hospitals in Gujarat - Ahmedabad, Rajkot, Vadodara, Gandhidham",
+            primarySpecialties: "Robotic cancer surgery – Kidney and Liver Transplant – Radiation and Oncology",
+            foundedYear: "2001; 25 Years of legacy",
+            recognitions: "NABH. Highest number of renal transplants in Gujarat",
+            patientAge: ["31-50"],
+            patientGender: "Men and Women",
+            patientIncome: ["Middle", "Upper Middle"],
+            patientGeography: ["Big Cities", "Smaller towns", "Rural"],
+            specialtyScope: "Multi-specialty",
+            decisionMakerLifestyle: [
+                "Quality seeker - Wants the best care, not the lowest price",
+                "Value seeker - Wants good treatment at a fair price",
+                "Conservative treatment seeker - Prefers medicines, surgery only if needed",
+            ],
+            companions: ["With spouse / partner", "With family"],
+            keyBenefits: "Transparency in costing.",
+            competitorStandout: "Renal because of doctor. Cancer because of everything will happen under one roof.",
+            patientFeel: "Patients journey is very organized and systematic. Delivery as per expectations.",
+            competitors: "Zydus\nShalby\nCims\nHCG",
+            desiredTone: "Trustworthy / Mature",
+            desiredWorld: "Premium",
+            hospitalAsPerson: "Expert / Advisor",
+            adObjectives: ["Build Awareness", "Other"],
+            adObjectiveDetails: {
+                "Build Awareness": "Where you go for emergencies",
+                "Other": "To help people",
+            },
+            adImportantMessages: ["Other"],
+            adMessageDetails: {
+                "Other": "International emergencies response protocol",
+            },
+            dialogueLanguage: "Hindi",
         }
     }
 ];

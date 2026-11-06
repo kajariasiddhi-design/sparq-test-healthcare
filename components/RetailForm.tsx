@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { acceptWithFollowUps, describeFollowUps } from '../utils';
 import { RetailFormData, UploadedImage, RetailFormSuggestions, Language, TranscribedClip } from '../types';
 import { retailFormTranslations } from '../data/retailTranslations';
 import { formTranslations, translations } from '../data/translations';
@@ -156,7 +157,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                         />
                     </SuggestedInput>
 
-                    <SuggestedInput lang={lang} suggestion={suggestions.primaryCategories} onAccept={(val) => update('primaryCategories', val)}>
+                    <SuggestedInput lang={lang} suggestion={suggestions.primaryCategories} displayValue={describeFollowUps('retail', 'primaryCategories', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'primaryCategories', val, suggestions as any, update)}>
                         <Label qIndex="1.3" lang={lang} text={section1.q1_3.text} required />
                         <MultiChips
                             lang={lang}
@@ -326,12 +327,14 @@ const RetailForm: React.FC<RetailFormProps> = ({
 
                                 <div className="mt-6">
                                     <Label lang={lang} text={section3.q3B.text} className="text-[15px]" />
+                                    <SuggestedInput lang={lang} suggestion={(suggestions as any).otherCustomerSegment} displayValue={describeFollowUps('retail', 'otherCustomerSegment', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'otherCustomerSegment', val, suggestions as any, update)}>
                                     <SingleChips
                                         lang={lang}
                                         options={section3.q3B.options}
                                         value={form.otherCustomerSegment || ''}
                                         onChange={(val) => update('otherCustomerSegment', val)}
                                     />
+                                    </SuggestedInput>
                                     {form.otherCustomerSegment === 'Others' && (
                                         <div className="mt-3">
                                             <TextInput
@@ -436,7 +439,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                                 </SuggestedInput>
                             </div>
 
-                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingCompany} onAccept={(val) => update('shoppingCompany', val)}>
+                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingCompany} displayValue={describeFollowUps('retail', 'shoppingCompany', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'shoppingCompany', val, suggestions as any, update)}>
                             <Label qIndex="3.4" lang={lang} text={section3.q3_4.text} />
                             <MultiChips
                                 lang={lang}
@@ -473,7 +476,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             />
                         </SuggestedInput>
 
-                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingOccasion} onAccept={(val) => update('shoppingOccasion', val)}>
+                                                                        <SuggestedInput lang={lang} suggestion={suggestions.shoppingOccasion} displayValue={describeFollowUps('retail', 'shoppingOccasion', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'shoppingOccasion', val, suggestions as any, update)}>
                             <Label qIndex="4.2" lang={lang} text={section4.q4_2.text} />
                             <div className="mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -634,7 +637,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </div>
                         </div>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.desiredPerson} onAccept={(val) => update('storeAsPerson', val)}>
+                        <SuggestedInput lang={lang} suggestion={(suggestions as any).storeAsPerson} displayValue={describeFollowUps('retail', 'storeAsPerson', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'storeAsPerson', val, suggestions as any, update)}>
                             <Label qIndex="7.2" lang={lang} text={section7.q7_2.text} />
                             <div className="mt-3">
                                 <SingleChips
@@ -657,7 +660,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adObjective} onAccept={(val) => update('adObjective', val)}>
+                        <SuggestedInput lang={lang} suggestion={(suggestions as any).adObjectives} displayValue={describeFollowUps('retail', 'adObjectives', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'adObjectives', val, suggestions as any, update)}>
                             <Label qIndex="7.3" lang={lang} text={section7.q7_3.text} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -697,7 +700,7 @@ const RetailForm: React.FC<RetailFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} onAccept={(val) => update('adImportantMessages', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} displayValue={describeFollowUps('retail', 'adImportantMessages', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'adImportantMessages', val, suggestions as any, update)}>
                             <Label qIndex="7.4" lang={lang} text={section7.q7_4.text} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -740,12 +743,14 @@ const RetailForm: React.FC<RetailFormProps> = ({
                         <div>
                             <Label qIndex="7.5" lang={lang} text={section7.q7_5.text} />
                             <div className="mt-3">
+                                <SuggestedInput lang={lang} suggestion={(suggestions as any).ongoingOffer} displayValue={describeFollowUps('retail', 'ongoingOffer', suggestions as any)} onAccept={(val) => acceptWithFollowUps('retail', 'ongoingOffer', val, suggestions as any, update)}>
                                 <SingleChips
                                     lang={lang}
                                     options={section7.q7_5.options}
                                     value={form.ongoingOffer}
                                     onChange={(val) => update('ongoingOffer', val)}
                                 />
+                                </SuggestedInput>
                                 {form.ongoingOffer === 'Yes' && (
                                     <div className="mt-3">
                                         <TextInput

@@ -2,8 +2,8 @@ import React from 'react';
 import { MultilingualText, Language } from '../types';
 
 interface SampleDataSelectorProps {
-  sampleProfiles: { name: MultilingualText, data: any, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' }[];
-  onSelect: (data: any, name: MultilingualText, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail') => void;
+  sampleProfiles: { name: MultilingualText, data: any, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' }[];
+  onSelect: (data: any, name: MultilingualText, category: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare') => void;
   lang: Language;
   translations: any;
   currentCategory: 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare' | null;
@@ -20,12 +20,18 @@ const SampleDataSelector: React.FC<SampleDataSelectorProps> = ({ sampleProfiles,
     }
   };
 
+  const categoryOrder = ['fmcg', 'industrial', 'lifestyle', 'retail', 'healthcare'];
+  const orderedProfiles = sampleProfiles
+    .map((profile, index) => ({ profile, index }))
+    .sort((a, b) => categoryOrder.indexOf(a.profile.category) - categoryOrder.indexOf(b.profile.category));
+
   const getCategoryLabel = (cat: string) => {
     switch(cat) {
       case 'fmcg': return 'FMCG';
       case 'industrial': return 'Industrial Goods';
       case 'lifestyle': return 'Lifestyle';
       case 'retail': return 'Organised Retail';
+      case 'healthcare': return 'Healthcare and Hospitals';
       default: return cat;
     }
   };
@@ -42,7 +48,7 @@ const SampleDataSelector: React.FC<SampleDataSelectorProps> = ({ sampleProfiles,
         <option value="" disabled>
             {translations.selectSamplePrompt[lang] || translations.selectSamplePrompt.en}
         </option>
-        {sampleProfiles.map((profile, index) => {
+        {orderedProfiles.map(({ profile, index }) => {
           const isCorrectCategory = profile.category === currentCategory;
           return (
             <option 

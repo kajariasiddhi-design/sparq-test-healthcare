@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { acceptWithFollowUps, describeFollowUps } from '../utils';
 import { IndustrialFormData, IndustrialFormSuggestions, Language, TranscribedClip, MultilingualText, UploadedImage } from '../types';
 import { industrialFormTranslations, translations } from '../data/translations';
 import AudioTranscriptionManager from './AudioTranscriptionManager.tsx';
@@ -55,7 +56,7 @@ const IndustrialGoodsForm: React.FC<IndustrialGoodsFormProps> = ({
                 update('adFocusDetails', suggestions.adFocusDetails);
             }
         } else {
-            update(fieldId, suggestion);
+            acceptWithFollowUps('industrial', fieldId, suggestion, suggestions, update);
         }
     };
 
@@ -321,7 +322,7 @@ const IndustrialGoodsForm: React.FC<IndustrialGoodsFormProps> = ({
                     </div>
                     <div>
                         <Label qIndex="6.2" text={industrialFormTranslations.section7.q7_2.text} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.brandAsPerson} onAccept={(s) => handleAcceptSuggestion('brandAsPerson', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.brandAsPerson} displayValue={describeFollowUps('industrial', 'brandAsPerson', suggestions)} onAccept={(s) => handleAcceptSuggestion('brandAsPerson', s)} lang={lang}>
                             <SingleChips options={industrialFormTranslations.section7.q7_2.options} value={form.brandAsPerson} onChange={v => update('brandAsPerson', v)} lang={lang} />
                         </SuggestedInput>
                         {form.brandAsPerson === 'other' && (
@@ -330,7 +331,7 @@ const IndustrialGoodsForm: React.FC<IndustrialGoodsFormProps> = ({
                     </div>
                     <div>
                         <Label qIndex="6.3" text={industrialFormTranslations.section7.q7_3.text} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.adObjectives} onAccept={(s) => handleAcceptSuggestion('adObjectives', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.adObjectives} displayValue={describeFollowUps('industrial', 'adObjectives', suggestions)} onAccept={(s) => handleAcceptSuggestion('adObjectives', s)} lang={lang}>
                             <MultiChips options={industrialFormTranslations.section7.q7_3.options} value={form.adObjectives} onChange={handleAdObjectivesChange} lang={lang} maxSelections={2} />
                         </SuggestedInput>
                         {(form.adObjectives || []).length > 0 && (
@@ -352,7 +353,7 @@ const IndustrialGoodsForm: React.FC<IndustrialGoodsFormProps> = ({
 
                     <div>
                         <Label qIndex="6.4" text={industrialFormTranslations.section7.q7_4.text} lang={lang} />
-                        <SuggestedInput suggestion={suggestions.adFocus} onAccept={(s) => handleAcceptSuggestion('adFocus', s)} lang={lang}>
+                        <SuggestedInput suggestion={suggestions.adFocus} displayValue={describeFollowUps('industrial', 'adFocus', suggestions)} onAccept={(s) => handleAcceptSuggestion('adFocus', s)} lang={lang}>
                             <MultiChips options={industrialFormTranslations.section7.q7_4.options} value={form.adFocus} onChange={handleAdFocusChange} lang={lang} maxSelections={2} />
                         </SuggestedInput>
                         {(form.adFocus || []).length > 0 && (

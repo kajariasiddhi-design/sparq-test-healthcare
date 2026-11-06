@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { acceptWithFollowUps, describeFollowUps } from '../utils';
 import { HealthcareFormData, UploadedImage, HealthcareFormSuggestions, Language, TranscribedClip } from '../types';
 import { healthcareFormTranslations } from '../data/healthcareTranslations';
 import { formTranslations, translations } from '../data/translations';
@@ -285,12 +286,14 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
 
                                 <div className="mt-6">
                                     <Label lang={lang} text={section3.q3B.text} className="text-[15px]" />
+                                    <SuggestedInput lang={lang} suggestion={(suggestions as any).otherCustomerSegment} displayValue={describeFollowUps('healthcare', 'otherCustomerSegment', suggestions as any)} onAccept={(val) => acceptWithFollowUps('healthcare', 'otherCustomerSegment', val, suggestions as any, update)}>
                                     <SingleChips
                                         lang={lang}
                                         options={section3.q3B.options}
                                         value={form.otherCustomerSegment || ''}
                                         onChange={(val) => update('otherCustomerSegment', val)}
                                     />
+                                    </SuggestedInput>
                                     {form.otherCustomerSegment === 'Others' && (
                                         <div className="mt-3">
                                             <TextInput
@@ -307,14 +310,24 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                         </div>
 
                         <div className="p-4 border border-neutral-200 rounded-xl bg-white shadow-sm">
-                            <SuggestedInput lang={lang} suggestion={suggestions.treatments} onAccept={(val) => update('treatments', val)}>
-                                <Label qIndex="3.2" lang={lang} text={section3.q3_2.text} />
+                            <Label qIndex="3.2" lang={lang} text={section3.q3_2.text} />
+                            <SuggestedInput lang={lang} suggestion={suggestions.specialtyScope} onAccept={(val) => update('specialtyScope', val)}>
                                 <SingleChips
                                     lang={lang}
                                     options={section3.q3_2.scopeOptions}
                                     value={form.specialtyScope}
                                     onChange={(val) => update('specialtyScope', val)}
                                 />
+                            </SuggestedInput>
+                            <SuggestedInput
+                                lang={lang}
+                                suggestion={suggestions.treatments}
+                                displayValue={describeFollowUps('healthcare', 'treatments', suggestions as any)}
+                                onAccept={(val) => {
+                                    update('specialtyScope', 'Single / select specialties or clinics');
+                                    acceptWithFollowUps('healthcare', 'treatments', val, suggestions as any, update);
+                                }}
+                            >
                                 {form.specialtyScope === 'Single / select specialties or clinics' && (
                                     <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                                         <SearchableMultiSelect
@@ -400,7 +413,7 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                             </SuggestedInput>
                         </div>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.companions} onAccept={(val) => update('companions', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.companions} displayValue={describeFollowUps('healthcare', 'companions', suggestions as any)} onAccept={(val) => acceptWithFollowUps('healthcare', 'companions', val, suggestions as any, update)}>
                             <Label qIndex="3.4" lang={lang} text={section3.q3_4.text} hint={section3.q3_4.note} />
                             <MultiChips
                                 lang={lang}
@@ -546,7 +559,7 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                             </div>
                         </div>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.hospitalAsPerson} onAccept={(val) => update('hospitalAsPerson', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.hospitalAsPerson} displayValue={describeFollowUps('healthcare', 'hospitalAsPerson', suggestions as any)} onAccept={(val) => acceptWithFollowUps('healthcare', 'hospitalAsPerson', val, suggestions as any, update)}>
                             <Label qIndex="6.2" lang={lang} text={section6.q6_2.text} hint={section6.q6_2.note} />
                             <div className="mt-3">
                                 <SingleChips
@@ -569,7 +582,7 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adObjectives} onAccept={(val) => update('adObjectives', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.adObjectives} displayValue={describeFollowUps('healthcare', 'adObjectives', suggestions as any)} onAccept={(val) => acceptWithFollowUps('healthcare', 'adObjectives', val, suggestions as any, update)}>
                             <Label qIndex="6.3" lang={lang} text={section6.q6_3.text} hint={section6.q6_3.note} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">
@@ -609,7 +622,7 @@ const HealthcareForm: React.FC<HealthcareFormProps> = ({
                             </div>
                         </SuggestedInput>
 
-                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} onAccept={(val) => update('adImportantMessages', val)}>
+                        <SuggestedInput lang={lang} suggestion={suggestions.adImportantMessages} displayValue={describeFollowUps('healthcare', 'adImportantMessages', suggestions as any)} onAccept={(val) => acceptWithFollowUps('healthcare', 'adImportantMessages', val, suggestions as any, update)}>
                             <Label qIndex="6.4" lang={lang} text={section6.q6_4.text} hint={section6.q6_4.note} />
                             <div className="space-y-4 mt-3">
                                 <div className="flex flex-wrap gap-2">

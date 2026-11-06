@@ -527,6 +527,149 @@ const safeStr = (val: any): string => {
     return String(val);
 };
 
+export type FormCategory = 'fmcg' | 'industrial' | 'lifestyle' | 'retail' | 'healthcare';
+
+/**
+ * Questions whose answer opens a free-text box. `when` lists the options that open it; without
+ * `when`, the box is keyed by option, with one detail per selected option (e.g. Ad Objectives).
+ * Option spellings differ by question and category, so these match the checks in each form.
+ */
+export const TRANSCRIPT_FOLLOW_UPS: Record<FormCategory, { field: string; followUp: string; when?: string[] }[]> = {
+    fmcg: [
+        { field: 'desiredImageryAttributes', followUp: 'desiredViewOther', when: ['Other'] },
+        { field: 'consumerViewPersona', followUp: 'consumerViewPersonaOther', when: ['Other'] },
+        { field: 'adObjectives', followUp: 'adObjectiveDetails' },
+        { field: 'adFocus', followUp: 'adFocusDetails' },
+    ],
+    industrial: [
+        { field: 'brandAsPerson', followUp: 'brandAsPersonOther', when: ['other'] },
+        { field: 'adObjectives', followUp: 'adObjectiveDetails' },
+        { field: 'adFocus', followUp: 'adFocusDetails' },
+    ],
+    lifestyle: [
+        { field: 'subCategory', followUp: 'subCategoryOther', when: ['Others'] },
+        { field: 'otherCustomerSegment', followUp: 'otherCustomerSegmentBrief', when: ['Others'] },
+        { field: 'shoppingCompany', followUp: 'shoppingCompanyOtherBrief', when: ['Others'] },
+        { field: 'desiredAttributes', followUp: 'desiredAttributesOther', when: ['Other'] },
+        { field: 'brandAsPerson', followUp: 'brandAsPersonOther', when: ['Other'] },
+        { field: 'adObjectives', followUp: 'adObjectiveDetails' },
+        { field: 'adImportantMessages', followUp: 'adMessageDetails' },
+        { field: 'featureFounderEmployee', followUp: 'featureFounderEmployeeBrief', when: ['Yes'] },
+    ],
+    retail: [
+        { field: 'primaryCategories', followUp: 'primaryCategoriesOther', when: ['Others'] },
+        { field: 'otherCustomerSegment', followUp: 'otherCustomerSegmentBrief', when: ['Others'] },
+        { field: 'shoppingCompany', followUp: 'shoppingCompanyOther', when: ['Others'] },
+        { field: 'shoppingOccasion', followUp: 'shoppingOccasionOther', when: ['Other'] },
+        { field: 'storeAsPerson', followUp: 'storeAsPersonOther', when: ['Other'] },
+        { field: 'adObjectives', followUp: 'adObjectiveDetails' },
+        { field: 'adImportantMessages', followUp: 'adMessageDetails' },
+        { field: 'ongoingOffer', followUp: 'offerDetails', when: ['Yes'] },
+    ],
+    healthcare: [
+        { field: 'otherCustomerSegment', followUp: 'otherCustomerSegmentBrief', when: ['Others'] },
+        { field: 'treatments', followUp: 'treatmentsOther', when: ['Others'] },
+        { field: 'companions', followUp: 'companionsOther', when: ['Others'] },
+        { field: 'hospitalAsPerson', followUp: 'hospitalAsPersonOther', when: ['Other'] },
+        { field: 'adObjectives', followUp: 'adObjectiveDetails' },
+        { field: 'adImportantMessages', followUp: 'adMessageDetails' },
+    ],
+};
+
+/** The prompt section telling the AI how to fill each follow-up box for this category. */
+export const buildFollowUpInstructions = (category: FormCategory): string => {
+    const lines = TRANSCRIPT_FOLLOW_UPS[category].map(({ field, followUp, when }) => when
+        ? `- ${followUp}: only if ${field} is or includes "${when[0]}", write what the transcript says about it. Otherwise leave it out.`
+        : `- ${followUp}: a JSON object with one entry for each option chosen in ${field}. The key is the exact option and the value is what the transcript says about it, such as the specific message, event or goal.`);
+    return `Some answers open a free-text box on the form. Fill these whenever the transcript gives the information, using only what was actually said:
+${lines.join('\n')}
+Always pick a listed option when one fits, even if the wording in the transcript differs. Use the Others / Other option only for something that truly fits none of the listed options, and describe it in that option's free-text box.`;
+};
+
+const selectedOptions = (value: any): string[] => {
+    if (Array.isArray(value)) return value.map(String);
+    if (typeof value === 'string') return value.split(',').map(s => s.trim()).filter(Boolean);
+    return [];
+};
+
+const toDetailsObject = (value: any): Record<string, any> | null => {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+};
+
+/** Removes follow-up text whose box would stay closed, so hidden answers are never submitted. */
+export const cleanFollowUpSuggestions = (category: FormCategory, suggestions: Record<string, any>): Record<string, any> => {
+    const cleaned = { ...suggestions };
+
+    if (category === 'healthcare') {
+        if (cleaned.decisionMakerLifestyle !== undefined) {
+            const options = healthcareFormTranslations.section3.q3_3.options.map(o => o.value);
+            cleaned.decisionMakerLifestyle = pickKnownOptions(cleaned.decisionMakerLifestyle, options).selected.slice(0, 3);
+        }
+        const treatments = selectedOptions(cleaned.treatments);
+        if (cleaned.specialtyScope === 'Multi-specialty') {
+            delete cleaned.treatments;
+            delete cleaned.treatmentsOther;
+        } else if (treatments.length > 0) {
+            cleaned.specialtyScope = 'Single / select specialties or clinics';
+        }
+    }
+
+    TRANSCRIPT_FOLLOW_UPS[category].forEach(({ field, followUp, when }) => {
+        if (cleaned[followUp] === undefined) return;
+        const chosen = selectedOptions(cleaned[field]);
+        if (when) {
+            const text = safeStr(cleaned[followUp]).trim();
+            if (text && chosen.some(c => when.includes(c))) cleaned[followUp] = text;
+            else delete cleaned[followUp];
+            return;
+        }
+        const details = toDetailsObject(cleaned[followUp]) || {};
+        const kept: Record<string, string> = {};
+        chosen.forEach(option => {
+            const match = Object.keys(details).find(k => k.trim().toLowerCase() === option.trim().toLowerCase());
+            const text = match ? safeStr(details[match]).trim() : '';
+            if (text) kept[option] = text;
+        });
+        if (Object.keys(kept).length > 0) cleaned[followUp] = kept;
+        else delete cleaned[followUp];
+    });
+    return cleaned;
+};
+
+/** Accepting a suggestion also accepts the free-text answer that goes with it. */
+export const acceptWithFollowUps = (
+    category: FormCategory,
+    field: string,
+    value: any,
+    suggestions: Record<string, any>,
+    update: (field: any, value: any) => void
+) => {
+    update(field, value);
+    TRANSCRIPT_FOLLOW_UPS[category]
+        .filter(rule => rule.field === field && suggestions[rule.followUp] !== undefined)
+        .forEach(rule => update(rule.followUp, suggestions[rule.followUp]));
+};
+
+/** The suggestion text shown to the salesperson, including any free-text answer. */
+export const describeFollowUps = (category: FormCategory, field: string, suggestions: Record<string, any>): string | undefined => {
+    const rule = TRANSCRIPT_FOLLOW_UPS[category].find(r => r.field === field && suggestions[r.followUp] !== undefined);
+    if (!rule) return undefined;
+    const followUp = suggestions[rule.followUp];
+    return selectedOptions(suggestions[field]).map(option => {
+        if (rule.when) return rule.when.includes(option) ? `${option}: ${followUp}` : option;
+        return followUp[option] ? `${option}: ${followUp[option]}` : option;
+    }).join(', ');
+};
+
 /**
  * Target audience for the world and pillar recommendation prompts. Each category names these
  * fields differently (Consumer, Customer, Shopper, Patient).
@@ -564,7 +707,7 @@ export const inferCategory = (data: any): 'fmcg' | 'industrial' | 'lifestyle' | 
  * Finds known option values inside a saved answer. Matching on the options, rather than splitting on
  * commas, keeps options that contain commas intact. Anything unrecognised is returned as `rest`.
  */
-const pickKnownOptions = (raw: any, options: string[]): { selected: string[]; rest: string } => {
+export const pickKnownOptions = (raw: any, options: string[]): { selected: string[]; rest: string } => {
     let text = parseArrayOrCsv(raw).join(', ');
     const hits: { opt: string; at: number }[] = [];
     [...options].sort((a, b) => b.length - a.length).forEach(opt => {
