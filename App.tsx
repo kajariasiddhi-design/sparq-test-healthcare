@@ -1188,6 +1188,13 @@ function App() {
 
   const handleAcceptAllSuggestions = useCallback(() => {
     Object.entries(suggestions).forEach(([key, value]) => {
+      // A blank suggestion must not erase an answer already on the form
+      const isBlank = value == null
+        || (typeof value === 'string' && value.trim() === '')
+        || (Array.isArray(value) && value.length === 0)
+        || (typeof value === 'object' && Object.keys(value).length === 0);
+      if (isBlank) return;
+
       // Handle nested keys (e.g. consumerDemographics.age)
       if (key.includes('.')) {
         const [parentKey, childKey] = key.split('.');
@@ -1588,7 +1595,12 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
 
     } catch (err) {
       console.error("AI analysis failed:", err);
-      setError("Failed to analyze the transcript. The AI might have returned an unexpected format.");
+      const message = (err as Error)?.message || '';
+      if (/(503|429)|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand/i.test(message)) {
+        setError("The AI service is very busy right now. Your transcript is safe. Please try again in a minute.");
+      } else {
+        setError("Failed to analyze the transcript. The AI might have returned an unexpected format.");
+      }
     } finally {
       setIsAnalyzing(false);
     }
