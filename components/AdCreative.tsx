@@ -8,10 +8,12 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AdPillar, Story, Language, Frame } from '../types';
+import { AdPillar, Story, Language, Frame, UploadedImage } from '../types';
+import { MoodBoardImage, MAX_REFERENCE_IMAGES, prepareReferenceImage } from '../utils/moodBoard';
 import { translations } from '../data/translations'; import { addTranslations } from '../data/translation-utils';
 import { AccessLevel, ACCESS_LEVELS } from '../constants';
 import { TextArea, TextInput, TranslatedText, Label } from './FormElements.tsx';
+import { StoryboardConcept, suggestConceptTitle } from '../utils/storyboardDeck';
 
 interface AdCreativeProps {
     adPillars: AdPillar[];
@@ -42,7 +44,25 @@ interface AdCreativeProps {
     isSavingPillars?: boolean;
     pillarSaveSuccess?: boolean;
     accessLevel: AccessLevel;
+    onDownloadStoryboard?: (concepts: StoryboardConcept[]) => Promise<void>;
+    onGenerateMoodBoard?: (request: { conceptTitle: string; story: Story; references: UploadedImage[] }) => Promise<MoodBoardImage>;
 }
+
+/** A story picked for the storyboard deck. Any two stories, from the same pillar or different ones. */
+interface StoryboardPick {
+    pIdx: number;
+    sIdx: number;
+    title: string;
+}
+
+/** The version of a story the user is looking at: the original, an older version, or the latest. */
+const getDisplayedStory = (story: Story): Story => {
+    if (story.isViewingOriginal && story.originalStory) return story.originalStory;
+    if (story.currentVersionIndex !== undefined && story.currentVersionIndex !== -1 && story.versions?.[story.currentVersionIndex]) {
+        return story.versions[story.currentVersionIndex];
+    }
+    return story;
+};
 
 const INDIAN_LANGUAGES = [
     "English", "Hindi", "Bengali", "Telugu", "Marathi", "Tamil", "Urdu", "Gujarati", "Kannada", "Malayalam", "Odia"
@@ -234,8 +254,27 @@ const AdCreative: React.FC<AdCreativeProps> = ({
     onFreestyleStory, handleRecommendPillars, isAnalyzingPillars, handleClearRecommendations,
     handleTranslateStory, handleTranscribeAudio, handleSaveSelectedPillars,
     isSavingPillars, pillarSaveSuccess,
-    accessLevel
+    accessLevel, onDownloadStoryboard, onGenerateMoodBoard
 }) => {
+    const [activeStoryTab, setActiveStoryTab] = useState<number | null>(null);
+    const [storyboardPicks, setStoryboardPicks] = useState<StoryboardPick[]>([]);
+    const [storyboardNotice, setStoryboardNotice] = useState<string | null>(null);
+    const [isBuildingDeck, setIsBuildingDeck] = useState(false);
+    // Mood boards by story ("pIdx-sIdx"), so removing and re-adding a story keeps its image
+    const [moodBoards, setMoodBoards] = useState<Record<string, MoodBoardImage>>({});
+    const [moodBoardStatus, setMoodBoardStatus] = useState<Record<string, { loading?: boolean; error?: string }>>({});
+    // Pictures and logos for the mood boards, uploaded here at the storyboard stage
+    const [moodBoardRefs, setMoodBoardRefs] = useState<{ id: string; image: UploadedImage }[]>([]);
+    const [refUploadError, setRefUploadError] = useState<string | null>(null);
+
+    // New pillars mean new stories, so earlier picks and mood boards no longer apply
+    const pillarNamesKey = adPillars.map(p => p.pillar_name || p.pillar_id || p.name || '').join('|');
+    useEffect(() => {
+        setStoryboardPicks([]);
+        setStoryboardNotice(null);
+        setMoodBoards({});
+        setMoodBoardStatus({});
+    }, [pillarNamesKey]);
     const [copiedItemId, setCopiedItemId] = useState<string | null>(null);
     const [updateRequests, setUpdateRequests] = useState<Record<string, string>>({});
     const [isRecording, setIsRecording] = useState<string | null>(null); // storyId of currently recording story
@@ -365,6 +404,7 @@ const AdCreative: React.FC<AdCreativeProps> = ({
 
     const submitCustomStory = () => {
         if (customStoryPillarIndex !== null && customStoryPrompt && onFreestyleStory) {
+            setActiveStoryTab(customStoryPillarIndex);
             onFreestyleStory(customStoryPillarIndex, customStoryPrompt);
             setIsCustomStoryModalOpen(false);
         }
@@ -416,7 +456,118 @@ const AdCreative: React.FC<AdCreativeProps> = ({
     };
 
     // Collect all stories
-    const allStories = adPillars.flatMap((p, pIdx) => (p.stories || []).map((s, sIdx) => ({ ...s, pIdx, sIdx, pillarName: p.pillar_name || p.pillar_id || p.name })));
+    const pillarLabel = (p?: AdPillar) => (p && (p.pillar_name || p.pillar_id || p.name || p.maslow_level)) || 'Untitled Pillar';
+    const allStories = adPillars.flatMap((p, pIdx) => (p.stories || []).map((s, sIdx) => ({ ...s, pIdx, sIdx, pillarName: pillarLabel(p) })));
+
+    // One tab per pillar that has stories (or is generating them)
+    const storyTabs = adPillars
+        .map((p, pIdx) => ({ pIdx, name: pillarLabel(p), count: p.stories?.length || 0, isGenerating: !!p.isGeneratingStories }))
+        .filter(t => t.count > 0 || t.isGenerating);
+    const currentTab = storyTabs.some(t => t.pIdx === activeStoryTab) ? activeStoryTab : (storyTabs[0]?.pIdx ?? null);
+    const tabStories = allStories.filter(s => s.pIdx === currentTab);
+
+    // Storyboard picks whose story still exists, in concept order
+    const picks = storyboardPicks.filter(pk => adPillars[pk.pIdx]?.stories?.[pk.sIdx]);
+    const pickIndexOf = (pIdx: number, sIdx: number) => picks.findIndex(pk => pk.pIdx === pIdx && pk.sIdx === sIdx);
+
+    const toggleStoryboardPick = (pIdx: number, sIdx: number) => {
+        setStoryboardNotice(null);
+        if (pickIndexOf(pIdx, sIdx) !== -1) {
+            setStoryboardPicks(picks.filter(pk => !(pk.pIdx === pIdx && pk.sIdx === sIdx)));
+            return;
+        }
+        const story = adPillars[pIdx]?.stories?.[sIdx];
+        if (!story) return;
+        const pick = { pIdx, sIdx, title: suggestConceptTitle(getDisplayedStory(story), pillarLabel(adPillars[pIdx])) };
+        if (picks.length < 2) {
+            setStoryboardPicks([...picks, pick]);
+        } else {
+            setStoryboardNotice('The storyboard already has two stories. Remove one before adding another.');
+        }
+    };
+
+    const updatePickTitle = (index: number, title: string) =>
+        setStoryboardPicks(picks.map((pk, i) => (i === index ? { ...pk, title } : pk)));
+
+    const moodBoardKey = (pk: { pIdx: number; sIdx: number }) => `${pk.pIdx}-${pk.sIdx}`;
+    const isAnyMoodBoardLoading = picks.some(pk => moodBoardStatus[moodBoardKey(pk)]?.loading);
+
+    const handleGenerateMoodBoard = async (pk: StoryboardPick) => {
+        if (!onGenerateMoodBoard) return;
+        const key = moodBoardKey(pk);
+        setMoodBoardStatus(prev => ({ ...prev, [key]: { loading: true } }));
+        try {
+            const story = getDisplayedStory(adPillars[pk.pIdx].stories![pk.sIdx]);
+            const image = await onGenerateMoodBoard({
+                conceptTitle: pk.title.trim() || suggestConceptTitle(story, pillarLabel(adPillars[pk.pIdx])),
+                story,
+                references: moodBoardRefs.map(r => r.image),
+            });
+            setMoodBoards(prev => ({ ...prev, [key]: image }));
+            setMoodBoardStatus(prev => ({ ...prev, [key]: {} }));
+        } catch (err) {
+            console.error('Mood board failed', err);
+            const message = (err as Error)?.message || '';
+            setMoodBoardStatus(prev => ({
+                ...prev,
+                [key]: { error: /(429|503)|busy|overloaded|rate/i.test(message)
+                    ? 'The image service is busy right now. Please try again in a minute.'
+                    : 'Could not create the mood board.' },
+            }));
+        }
+    };
+
+    // Picked stories that still need a mood board; "Create mood boards" makes them all at once
+    const picksNeedingMoodBoard = picks.filter(pk => !moodBoards[moodBoardKey(pk)]);
+    const handleCreateMoodBoards = () => {
+        picksNeedingMoodBoard
+            .filter(pk => !moodBoardStatus[moodBoardKey(pk)]?.loading)
+            .forEach(pk => { handleGenerateMoodBoard(pk); });
+    };
+
+    const handleReferenceUpload = async (files: FileList | null) => {
+        if (!files?.length) return;
+        setRefUploadError(null);
+        const room = MAX_REFERENCE_IMAGES - moodBoardRefs.length;
+        const chosen = Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, Math.max(0, room));
+        if (files.length > chosen.length) {
+            setRefUploadError(room <= 0
+                ? `You can add up to ${MAX_REFERENCE_IMAGES} pictures. Remove one to add another.`
+                : `Only images can be added, up to ${MAX_REFERENCE_IMAGES} in all.`);
+        }
+        const added: { id: string; image: UploadedImage }[] = [];
+        for (const file of chosen) {
+            try {
+                const image = await prepareReferenceImage(file);
+                added.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, image });
+            } catch (err) {
+                setRefUploadError((err as Error).message);
+            }
+        }
+        setMoodBoardRefs(prev => [...prev, ...added].slice(0, MAX_REFERENCE_IMAGES));
+    };
+
+    const handleDownloadStoryboard = async () => {
+        if (!onDownloadStoryboard || picks.length !== 2) return;
+        setIsBuildingDeck(true);
+        setStoryboardNotice(null);
+        try {
+            await onDownloadStoryboard(picks.map(pk => ({
+                title: pk.title.trim() || suggestConceptTitle(getDisplayedStory(adPillars[pk.pIdx].stories![pk.sIdx])),
+                pillarName: pillarLabel(adPillars[pk.pIdx]),
+                story: getDisplayedStory(adPillars[pk.pIdx].stories![pk.sIdx]),
+                moodBoard: moodBoards[moodBoardKey(pk)] || null,
+            })));
+        } catch (err) {
+            console.error('Storyboard deck failed', err);
+            const message = (err as Error)?.message || '';
+            setStoryboardNotice(/load image|fetch|import/i.test(message)
+                ? 'Could not load the deck images. Check that the app is still running, refresh the page and try again.'
+                : 'Could not create the deck. Please try again.');
+        } finally {
+            setIsBuildingDeck(false);
+        }
+    };
 
     return (
         <>
@@ -609,7 +760,7 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                         <div className="mt-auto space-y-2">
                                             {accessLevel === ACCESS_LEVELS.FULL && (
                                                 <button
-                                                    onClick={() => handleGenerateStories(pIdx)}
+                                                    onClick={() => { setActiveStoryTab(pIdx); handleGenerateStories(pIdx); }}
                                                     disabled={pillar.isGeneratingStories}
                                                     className={`w-full py-2.5 border text-sm font-bold rounded-lg shadow-sm transition-colors flex justify-center items-center ${isRecommended
                                                         ? 'border-emerald-700 text-emerald-700 bg-white hover:bg-emerald-700 hover:text-white disabled:bg-slate-200 disabled:text-slate-500 disabled:border-slate-200'
@@ -630,34 +781,244 @@ const AdCreative: React.FC<AdCreativeProps> = ({
             </div>
 
             {/* Generated Stories Section */}
-            {allStories.length > 0 && (
+            {storyTabs.length > 0 && (
                 <div className="mt-12 pt-8 border-t border-slate-200">
                     <h3 className="text-2xl font-bold text-slate-800 mb-6">Generated Stories</h3>
+
+                    {/* Storyboard: one story from each of two pillars */}
+                    {accessLevel === ACCESS_LEVELS.FULL && onDownloadStoryboard && (
+                        <div className="mb-8 p-4 sm:p-5 rounded-xl border border-emerald-200 bg-emerald-50/60">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                                <h4 className="text-lg font-bold text-slate-800">Storyboard</h4>
+                                <p className="text-xs text-slate-500">Pick any two stories, from one pillar or two.</p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {[0, 1].map(slot => {
+                                    const pick = picks[slot];
+                                    const pickedStory = pick ? getDisplayedStory(adPillars[pick.pIdx].stories![pick.sIdx]) : null;
+                                    return pick && pickedStory ? (
+                                        <div key={slot} className="p-3 rounded-lg bg-white border border-emerald-300 shadow-sm">
+                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">
+                                                    Concept {slot + 1} · {pillarLabel(adPillars[pick.pIdx])}{pickedStory.genre ? ` · ${pickedStory.genre}` : ''}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleStoryboardPick(pick.pIdx, pick.sIdx)}
+                                                    className="p-1 text-slate-400 hover:text-red-600 rounded"
+                                                    title="Remove from storyboard"
+                                                    aria-label={`Remove concept ${slot + 1} from storyboard`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            </div>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1" htmlFor={`storyboard-title-${slot}`}>Concept title</label>
+                                            <input
+                                                id={`storyboard-title-${slot}`}
+                                                type="text"
+                                                value={pick.title}
+                                                onChange={e => updatePickTitle(slot, e.target.value)}
+                                                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                            />
+                                            {pickedStory.overview && <p className="mt-2 text-xs text-slate-600 line-clamp-2">{pickedStory.overview}</p>}
+
+                                            {onGenerateMoodBoard && (() => {
+                                                const key = moodBoardKey(pick);
+                                                const image = moodBoards[key];
+                                                const status = moodBoardStatus[key] || {};
+                                                return (
+                                                    <div className="mt-3 pt-3 border-t border-emerald-100">
+                                                        <span className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Mood board</span>
+                                                        {status.loading ? (
+                                                            <div className="flex items-center gap-3 p-4 rounded-md bg-slate-50 text-sm text-slate-600" role="status">
+                                                                <div className="loader border-emerald-600 border-t-transparent w-5 h-5 shrink-0"></div>
+                                                                Creating the mood board. This can take a minute or two.
+                                                            </div>
+                                                        ) : image ? (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openImageViewer(image.dataUrl)}
+                                                                    className="block w-full p-0 rounded-md overflow-hidden border border-slate-200 hover:border-emerald-400"
+                                                                    title="View full size"
+                                                                >
+                                                                    <img src={image.dataUrl} alt={`Mood board for concept ${slot + 1}`} className="block w-full h-auto" />
+                                                                </button>
+                                                                <span className="mt-2 block text-xs text-emerald-700 font-semibold">Goes into the deck</span>
+                                                            </>
+                                                        ) : status.error ? (
+                                                            <p className="text-xs text-red-600" role="alert">
+                                                                {status.error}{' '}
+                                                                <button type="button" onClick={() => handleGenerateMoodBoard(pick)} className="p-0 font-semibold underline text-red-700 hover:text-red-800">Try again</button>
+                                                            </p>
+                                                        ) : (
+                                                            <p className="text-xs text-slate-400">Appears here after “Create mood boards”.</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    ) : (
+                                        <div key={slot} className="p-3 rounded-lg border-2 border-dashed border-emerald-200 bg-white/60 flex items-center justify-center min-h-[96px] text-sm text-slate-500 text-center">
+                                            Concept {slot + 1}: use “Add to storyboard” on a story
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {onGenerateMoodBoard && (
+                                <div className="mt-4 p-3 sm:p-4 rounded-lg bg-white border border-emerald-200">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <span className="block text-[11px] font-bold text-slate-500 uppercase">Pictures and logos</span>
+                                            <span className="block text-xs text-slate-500 mt-0.5">Optional. Used for both mood boards.</span>
+                                        </div>
+                                        <label className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-md border ${moodBoardRefs.length >= MAX_REFERENCE_IMAGES
+                                            ? 'text-slate-400 border-slate-200 bg-slate-50 cursor-not-allowed'
+                                            : 'text-emerald-700 border-emerald-600 bg-white hover:bg-emerald-50 cursor-pointer'}`}>
+                                            + Upload
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                className="sr-only"
+                                                disabled={moodBoardRefs.length >= MAX_REFERENCE_IMAGES}
+                                                onChange={e => { handleReferenceUpload(e.target.files); e.target.value = ''; }}
+                                            />
+                                        </label>
+                                    </div>
+
+                                    {moodBoardRefs.length > 0 && (
+                                        <ul className="mt-3 flex flex-wrap gap-2">
+                                            {moodBoardRefs.map((ref, i) => (
+                                                <li key={ref.id} className="relative">
+                                                    <img src={ref.image.data} alt={`Uploaded picture ${i + 1}: ${ref.image.fileName}`} title={ref.image.fileName} className="w-20 h-20 rounded-md object-contain bg-slate-50 border border-slate-200" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setMoodBoardRefs(prev => prev.filter(r => r.id !== ref.id))}
+                                                        className="absolute -top-2 -right-2 p-0.5 rounded-full bg-white border border-slate-300 text-slate-500 hover:text-red-600 shadow-sm"
+                                                        aria-label={`Remove ${ref.image.fileName}`}
+                                                        title="Remove"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {refUploadError && <p className="mt-2 text-xs text-amber-800" role="status">{refUploadError}</p>}
+                                    {moodBoardRefs.length > 0 && (
+                                        <p className="mt-2 text-[11px] text-slate-400">{moodBoardRefs.length} of {MAX_REFERENCE_IMAGES}. Not saved; they clear when the page reloads.</p>
+                                    )}
+                                </div>
+                            )}
+                            {storyboardNotice && (
+                                <p className="mt-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2" role="status">{storyboardNotice}</p>
+                            )}
+                            <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+                                {picks.length === 2 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setStoryboardPicks([picks[1], picks[0]])}
+                                        className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+                                    >
+                                        Swap order
+                                    </button>
+                                )}
+                                {onGenerateMoodBoard && picks.length === 2 && picksNeedingMoodBoard.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCreateMoodBoards}
+                                        disabled={isAnyMoodBoardLoading}
+                                        className="px-5 py-2 text-sm font-bold text-emerald-700 bg-white border-2 border-emerald-700 rounded-md hover:bg-emerald-50 disabled:text-slate-400 disabled:border-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {isAnyMoodBoardLoading && <div className="loader border-emerald-700 border-t-transparent w-4 h-4"></div>}
+                                        {isAnyMoodBoardLoading ? 'Creating mood boards...' : 'Create mood boards'}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleDownloadStoryboard}
+                                    disabled={picks.length !== 2 || isBuildingDeck || isAnyMoodBoardLoading}
+                                    className="px-5 py-2 text-sm font-bold text-white bg-emerald-700 rounded-md shadow-sm hover:bg-emerald-800 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
+                                    title={picks.length !== 2 ? 'Pick two stories first' : isAnyMoodBoardLoading ? 'Wait for the mood board to finish' : 'Download the storyboard deck (.pptx)'}
+                                >
+                                    {isBuildingDeck && <div className="loader border-white border-t-transparent w-4 h-4"></div>}
+                                    {isBuildingDeck ? 'Creating deck...' : 'Download storyboard deck'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* One tab per pillar, styled like the Evaluations tabs */}
+                    <div role="tablist" aria-label="Stories by pillar" className="flex items-end gap-2 overflow-x-auto">
+                        {storyTabs.map(tab => {
+                            const isActive = tab.pIdx === currentTab;
+                            const pickedHere = picks.map((pk, i) => (pk.pIdx === tab.pIdx ? i : -1)).filter(i => i !== -1);
+                            return (
+                                <button
+                                    key={tab.pIdx}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    onClick={() => setActiveStoryTab(tab.pIdx)}
+                                    className={`relative -mb-px shrink-0 min-w-[180px] px-5 pt-3 pb-3 text-left rounded-t-xl border transition-colors ${isActive
+                                        ? 'z-10 bg-white border-slate-200 border-b-white border-t-2 border-t-emerald-700 hover:border-slate-200 hover:border-b-white hover:border-t-emerald-700'
+                                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-200'
+                                        }`}
+                                >
+                                    <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                        P{tab.pIdx + 1} - {tab.isGenerating ? 'Generating' : `${tab.count} ${tab.count === 1 ? 'story' : 'stories'}`}
+                                        {tab.isGenerating && <span className="loader border-emerald-600 border-t-transparent w-3 h-3"></span>}
+                                    </span>
+                                    <span className="mt-1 flex items-center gap-2">
+                                        <span className={`text-base font-bold ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>{tab.name}</span>
+                                        {pickedHere.map(i => (
+                                            <span key={i} className="text-[10px] font-black uppercase tracking-wider text-white bg-emerald-600 rounded px-1.5 py-0.5">C{i + 1}</span>
+                                        ))}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div role="tabpanel" className="border border-slate-200 rounded-b-xl rounded-tr-xl bg-white p-4 sm:p-6">
+                    {tabStories.length === 0 && (
+                        <div className="flex items-center justify-center gap-3 p-12 text-slate-500" role="status">
+                            <div className="loader border-emerald-600 border-t-transparent w-6 h-6"></div>
+                            Generating stories...
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {allStories.map((story, index) => {
+                        {tabStories.map((story) => {
                             const storyId = `story-${story.pIdx}-${story.sIdx}`;
-
-                            // DETERMINING WHAT STORY CONTENT TO DISPLAY
-                            // Prioritize viewing original if toggled
-                            // Otherwise, use currentVersionIndex to pick from versions array if viewing an older version
-                            let storyToDisplay = story;
-                            if (story.isViewingOriginal && story.originalStory) {
-                                storyToDisplay = story.originalStory;
-                            } else if (story.currentVersionIndex !== undefined && story.currentVersionIndex !== -1 && story.versions && story.versions[story.currentVersionIndex]) {
-                                storyToDisplay = story.versions[story.currentVersionIndex];
-                            }
-
+                            const storyToDisplay = getDisplayedStory(story);
                             if (!storyToDisplay) return null;
+                            const pickIndex = pickIndexOf(story.pIdx, story.sIdx);
 
                             return (
                                 <div
-                                    key={index}
+                                    key={storyId}
                                     className={`p-4 rounded-lg border shadow-sm flex flex-col transition-all duration-200 ${
-                                        story.isSelected
+                                        pickIndex !== -1
+                                            ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-300'
+                                            : story.isSelected
                                             ? 'bg-indigo-50 border-indigo-500 ring-2 ring-indigo-300'
                                             : 'bg-white border-slate-200'
                                     }`}
                                 >
+                                    {accessLevel === ACCESS_LEVELS.FULL && onDownloadStoryboard && (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleStoryboardPick(story.pIdx, story.sIdx)}
+                                            className={`mb-3 w-full py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition-colors ${pickIndex !== -1
+                                                ? 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
+                                                : 'bg-white border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                                                }`}
+                                        >
+                                            {pickIndex !== -1 ? `✓ Storyboard concept ${pickIndex + 1}` : '+ Add to storyboard'}
+                                        </button>
+                                    )}
                                     <div className="mb-2 flex justify-between items-center">
                                         <div className="flex items-center gap-2">
                                             {/* Selection checkbox */}
@@ -800,6 +1161,7 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                             );
                         })}
                     </div >
+                    </div>
                 </div >
             )}
 

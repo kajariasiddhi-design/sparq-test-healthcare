@@ -14,7 +14,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import JSZip from 'jszip';
-import { PROD_WEBHOOK_URL, TEST_WEBHOOK_URL, WEBHOOK_ACTIONS, GEMINI_API_KEY, REGIONS, REGION_SALESPERSONS, Region, ACCESS_LEVELS, getUserAccessLevel, AccessLevel } from './constants';
+import { PROD_WEBHOOK_URL, TEST_WEBHOOK_URL, WEBHOOK_ACTIONS, GEMINI_API_KEY, OPENROUTER_API_KEY, REGIONS, REGION_SALESPERSONS, Region, ACCESS_LEVELS, getUserAccessLevel, AccessLevel } from './constants';
 import { translations, formTranslations, industrialFormTranslations } from './data/translations';
 import { section3 as lifestyleSection3 } from './data/lifestyle/section3';
 import { section4 as lifestyleSection4 } from './data/lifestyle/section4';
@@ -50,6 +50,8 @@ import {
 } from './utils';
 import { urlToUploadedImage, callGemini3 } from './utils/api';
 import { exportStructuredPDF, exportStoryBriefPDF } from './utils/pdfGenerator';
+import { downloadStoryboardDeck, StoryboardConcept } from './utils/storyboardDeck';
+import { generateMoodBoard } from './utils/moodBoard';
 import { usePillarOperations } from './hooks/usePillarOperations';
 import { useWorldOperations } from './hooks/useWorldOperations';
 import sparqLogo from './assets/SPARQ Logo.png';
@@ -1302,6 +1304,31 @@ function App() {
     );
   };
 
+  const storyboardBrandName = () =>
+    String((category === 'fmcg' ? fmcgForm.brandName :
+       category === 'industrial' ? industrialForm.adBrand :
+       category === 'lifestyle' ? lifestyleForm.brands :
+       category === 'retail' ? retailForm.storeName :
+       category === 'healthcare' ? healthcareForm.hospitalName :
+       '') || 'Untitled Brand');
+
+  const CATEGORY_NAMES: Record<string, string> = {
+    fmcg: 'FMCG', industrial: 'Industrial', lifestyle: 'Lifestyle', retail: 'Organised Retail', healthcare: 'Healthcare and Hospitals',
+  };
+
+  const handleDownloadStoryboard = async (concepts: StoryboardConcept[]) => {
+    await downloadStoryboardDeck(storyboardBrandName(), brandDescriptionResponse?.positioning ?? '', concepts);
+  };
+
+  const handleGenerateMoodBoard = (request: { conceptTitle: string; story: Story; references: UploadedImage[] }) =>
+    generateMoodBoard({
+      brandName: storyboardBrandName(),
+      category: CATEGORY_NAMES[category] || category,
+      conceptTitle: request.conceptTitle,
+      story: request.story,
+      references: request.references,
+    }, OPENROUTER_API_KEY);
+
   const handleAnalyzeTranscript = useCallback(async () => {
     setIsAnalyzing(true);
     setSuggestions({});
@@ -2346,6 +2373,8 @@ Provide your response as a single JSON object. For example: {"brandName": "Brand
             handleToggleStorySelection={handleToggleStorySelection}
             isSavingPillars={isSavingPillars}
             pillarSaveSuccess={pillarSaveSuccess}
+            onDownloadStoryboard={handleDownloadStoryboard}
+            onGenerateMoodBoard={handleGenerateMoodBoard}
           />
         </div>
       )}

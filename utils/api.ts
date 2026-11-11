@@ -133,8 +133,17 @@ export const callGemini3Image = async (prompt: string, apiKey: string): Promise<
     return `data:image/jpeg;base64,${base64Data}`;
 };
 
-export const callOpenRouterImage = async (prompt: string, apiKey: string): Promise<string> => {
-    const model = 'google/gemini-3-pro-image-preview';
+export const callOpenRouterImage = async (
+    prompt: string,
+    apiKey: string,
+    options: { model?: string; referenceImages?: string[]; aspectRatio?: string; reasoningEffort?: 'low' | 'medium' | 'high' } = {},
+): Promise<string> => {
+    const model = options.model || 'google/gemini-3-pro-image-preview';
+    const references = options.referenceImages || [];
+    // With reference images the message carries the prompt and each image (as data URLs)
+    const content = references.length > 0
+        ? [{ type: 'text', text: prompt }, ...references.map(url => ({ type: 'image_url', image_url: { url } }))]
+        : prompt;
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -146,10 +155,12 @@ export const callOpenRouterImage = async (prompt: string, apiKey: string): Promi
             messages: [
                 {
                     "role": "user",
-                    "content": prompt
+                    content
                 }
             ],
-            modalities: ['image', 'text']
+            modalities: ['image', 'text'],
+            ...(options.aspectRatio ? { image_config: { aspect_ratio: options.aspectRatio } } : {}),
+            ...(options.reasoningEffort ? { reasoning: { effort: options.reasoningEffort } } : {}),
         }),
     });
 
@@ -160,11 +171,15 @@ export const callOpenRouterImage = async (prompt: string, apiKey: string): Promi
 
     const result = await response.json();
 
-    if (result.choices && result.choices[0].message.images) {
-        return result.choices[0].message.images[0].image_url.url;
+    const message = result.choices?.[0]?.message;
+    if (message?.images?.length) {
+        return message.images[0].image_url.url;
     }
 
-    throw new Error("No image data found in OpenRouter response");
+    // Say what came back instead, e.g. a text answer or a refusal
+    const reply = typeof message?.content === 'string' ? message.content.trim().slice(0, 300) : '';
+    const reason = result.choices?.[0]?.error?.message || result.error?.message || result.choices?.[0]?.finish_reason || '';
+    throw new Error(`No image in the response${reason ? ` (${reason})` : ''}${reply ? `. The model replied: "${reply}"` : ''}`);
 };
 
 export const callGeminiAudio = async (prompt: string, base64Audio: string, apiKey: string): Promise<string> => {
