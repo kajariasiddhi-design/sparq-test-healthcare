@@ -519,6 +519,8 @@ const AdCreative: React.FC<AdCreativeProps> = ({
 
     // Picked stories that still need a mood board; "Create mood boards" makes them all at once
     const picksNeedingMoodBoard = picks.filter(pk => !moodBoards[moodBoardKey(pk)]);
+    // The deck can only be downloaded once both concepts have their mood board
+    const needsMoodBoards = !!onGenerateMoodBoard && picksNeedingMoodBoard.length > 0;
     const handleCreateMoodBoards = () => {
         picksNeedingMoodBoard
             .filter(pk => !moodBoardStatus[moodBoardKey(pk)]?.loading)
@@ -788,9 +790,20 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                     {/* Storyboard: one story from each of two pillars */}
                     {accessLevel === ACCESS_LEVELS.FULL && onDownloadStoryboard && (
                         <div className="mb-8 p-4 sm:p-5 rounded-xl border border-emerald-200 bg-emerald-50/60">
-                            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                                <h4 className="text-lg font-bold text-slate-800">Storyboard</h4>
-                                <p className="text-xs text-slate-500">Pick any two stories, from one pillar or two.</p>
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-800">Storyboard</h4>
+                                    <p className="text-xs text-slate-500">Pick any two stories, from one pillar or two.</p>
+                                </div>
+                                {picks.length === 2 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setStoryboardPicks([picks[1], picks[0]])}
+                                        className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 hover:border-slate-300"
+                                    >
+                                        Swap order of concepts
+                                    </button>
+                                )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[0, 1].map(slot => {
@@ -852,7 +865,7 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                                                 <button type="button" onClick={() => handleGenerateMoodBoard(pick)} className="p-0 font-semibold underline text-red-700 hover:text-red-800">Try again</button>
                                                             </p>
                                                         ) : (
-                                                            <p className="text-xs text-slate-400">Appears here after “Create mood boards”.</p>
+                                                            <p className="text-xs text-slate-400">Appears here after you click “Create mood boards”.</p>
                                                         )}
                                                     </div>
                                                 );
@@ -870,12 +883,12 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <div>
                                             <span className="block text-[11px] font-bold text-slate-500 uppercase">Pictures and logos</span>
-                                            <span className="block text-xs text-slate-500 mt-0.5">Optional. Used for both mood boards.</span>
+                                            <span className="block text-xs text-slate-500 mt-0.5">Optional. Up to {MAX_REFERENCE_IMAGES} images.</span>
                                         </div>
-                                        <label className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-md border ${moodBoardRefs.length >= MAX_REFERENCE_IMAGES
+                                        <label className={`shrink-0 min-w-[160px] text-center px-6 py-2 text-sm font-semibold rounded-md border ${moodBoardRefs.length >= MAX_REFERENCE_IMAGES
                                             ? 'text-slate-400 border-slate-200 bg-slate-50 cursor-not-allowed'
                                             : 'text-emerald-700 border-emerald-600 bg-white hover:bg-emerald-50 cursor-pointer'}`}>
-                                            + Upload
+                                            + Upload images
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -907,7 +920,7 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                     )}
                                     {refUploadError && <p className="mt-2 text-xs text-amber-800" role="status">{refUploadError}</p>}
                                     {moodBoardRefs.length > 0 && (
-                                        <p className="mt-2 text-[11px] text-slate-400">{moodBoardRefs.length} of {MAX_REFERENCE_IMAGES}. Not saved; they clear when the page reloads.</p>
+                                        <p className="mt-2 text-[11px] text-slate-400">{moodBoardRefs.length} of {MAX_REFERENCE_IMAGES} added</p>
                                     )}
                                 </div>
                             )}
@@ -915,14 +928,15 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                 <p className="mt-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2" role="status">{storyboardNotice}</p>
                             )}
                             <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-                                {picks.length === 2 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setStoryboardPicks([picks[1], picks[0]])}
-                                        className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
-                                    >
-                                        Swap order
-                                    </button>
+                                {/* Say why Download is not available yet */}
+                                {(picks.length !== 2 || needsMoodBoards) && (
+                                    <p className="mr-auto text-xs text-slate-500" role="status">
+                                        {picks.length !== 2
+                                            ? 'Pick two stories to create the storyboard.'
+                                            : isAnyMoodBoardLoading
+                                                ? 'The deck can be downloaded once both mood boards are ready.'
+                                                : 'Create the mood boards to download the deck.'}
+                                    </p>
                                 )}
                                 {onGenerateMoodBoard && picks.length === 2 && picksNeedingMoodBoard.length > 0 && (
                                     <button
@@ -938,9 +952,9 @@ const AdCreative: React.FC<AdCreativeProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleDownloadStoryboard}
-                                    disabled={picks.length !== 2 || isBuildingDeck || isAnyMoodBoardLoading}
+                                    disabled={picks.length !== 2 || isBuildingDeck || needsMoodBoards}
                                     className="px-5 py-2 text-sm font-bold text-white bg-emerald-700 rounded-md shadow-sm hover:bg-emerald-800 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
-                                    title={picks.length !== 2 ? 'Pick two stories first' : isAnyMoodBoardLoading ? 'Wait for the mood board to finish' : 'Download the storyboard deck (.pptx)'}
+                                    title={picks.length !== 2 ? 'Pick two stories first' : needsMoodBoards ? 'Create the mood boards first' : 'Download the storyboard deck (.pptx)'}
                                 >
                                     {isBuildingDeck && <div className="loader border-white border-t-transparent w-4 h-4"></div>}
                                     {isBuildingDeck ? 'Creating deck...' : 'Download storyboard deck'}
