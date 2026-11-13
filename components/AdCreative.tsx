@@ -13,7 +13,7 @@ import { MoodBoardImage, MAX_REFERENCE_IMAGES, prepareReferenceImage } from '../
 import { translations } from '../data/translations'; import { addTranslations } from '../data/translation-utils';
 import { AccessLevel, ACCESS_LEVELS } from '../constants';
 import { TextArea, TextInput, TranslatedText, Label } from './FormElements.tsx';
-import { StoryboardConcept, suggestConceptTitle } from '../utils/storyboardDeck';
+import { StoryboardConcept, suggestConceptTitle, preloadStoryboardDeck } from '../utils/storyboardDeck';
 
 interface AdCreativeProps {
     adPillars: AdPillar[];
@@ -275,6 +275,12 @@ const AdCreative: React.FC<AdCreativeProps> = ({
         setMoodBoards({});
         setMoodBoardStatus({});
     }, [pillarNamesKey]);
+
+    // Load the deck library and images now, while the app's server is surely up, so the
+    // download still works later even if the server has stopped by then
+    useEffect(() => {
+        if (onDownloadStoryboard) preloadStoryboardDeck().catch(() => { /* retried on download */ });
+    }, [!!onDownloadStoryboard]);
     const [copiedItemId, setCopiedItemId] = useState<string | null>(null);
     const [updateRequests, setUpdateRequests] = useState<Record<string, string>>({});
     const [isRecording, setIsRecording] = useState<string | null>(null); // storyId of currently recording story

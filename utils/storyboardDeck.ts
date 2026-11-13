@@ -5,7 +5,8 @@
  * team's concept decks: cover, brand description, then for each concept a story slide, an
  * ending / tagline slide and an empty mood board slide for the team to fill in.
  *
- * Runs in the browser. pptxgenjs is loaded only when a deck is downloaded.
+ * Runs in the browser. pptxgenjs and the deck images are loaded in the background shortly after
+ * the app opens (see preloadStoryboardDeck), not with the main bundle.
  */
 
 import type { Story } from '../types';
@@ -94,12 +95,50 @@ const coverFontSize = (name: string): number => (name.length > 40 ? 40 : name.le
 const safeFilePart = (text: string): string =>
     text.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'Brand';
 
+/** Fetches a bundled image and keeps it in memory as a data URL. */
+const loadImageData = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Could not load image ${url} (${response.status})`);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error(`Could not load image ${url}`));
+        reader.readAsDataURL(blob);
+    });
+};
+
+interface DeckTools {
+    PptxGenJS: any;
+    coverWaves: string;
+    sparqLogo: string;
+}
+
+let deckTools: Promise<DeckTools> | null = null;
+
+/**
+ * Loads pptxgenjs and the deck images once and keeps them in memory, so the deck can still be
+ * built if the app's server stops (or is redeployed) after the page has loaded. Called when the
+ * app opens and again when the ad creative screen opens; a failed load is retried on the next call.
+ */
+export const preloadStoryboardDeck = (): Promise<DeckTools> => {
+    if (!deckTools) {
+        deckTools = Promise.all([import('pptxgenjs'), loadImageData(coverWavesUrl), loadImageData(sparqLogoUrl)])
+            .then(([mod, coverWaves, sparqLogo]) => ({ PptxGenJS: mod.default, coverWaves, sparqLogo }));
+        deckTools.catch(() => { deckTools = null; });
+    }
+    return deckTools;
+};
+
+// pptxgenjs takes image data as "image/png;base64,..." (a data URL without the "data:")
+const imageData = (dataUrl: string) => ({ data: dataUrl.slice(5) });
+
 export const downloadStoryboardDeck = async (
     brandName: string,
     positioning: any,
     concepts: StoryboardConcept[],
 ): Promise<void> => {
-    const { default: PptxGenJS } = await import('pptxgenjs');
+    const { PptxGenJS, coverWaves, sparqLogo } = await preloadStoryboardDeck();
     const pres = new PptxGenJS();
     pres.layout = 'LAYOUT_WIDE'; // 13.333" x 7.5", same as the concept decks
     pres.title = `${brandName} - Storyboard`;
@@ -107,7 +146,7 @@ export const downloadStoryboardDeck = async (
     pres.theme = { headFontFace: FONT, bodyFontFace: FONT };
 
     const addLogo = (slide: any) =>
-        slide.addImage({ path: sparqLogoUrl, x: 11.55, y: 6.82, w: 1.42, h: 0.33, altText: 'SparQ logo' });
+        slide.addImage({ ...imageData(sparqLogo), x: 11.55, y: 6.82, w: 1.42, h: 0.33, altText: 'SparQ logo' });
 
     const contentSlide = () => {
         const slide = pres.addSlide();
@@ -128,8 +167,8 @@ export const downloadStoryboardDeck = async (
     // 1. Cover
     const cover = pres.addSlide();
     cover.background = { color: 'FFFFFF' };
-    cover.addImage({ path: coverWavesUrl, x: 0, y: 0, w: SLIDE_W, h: 7.5, altText: 'Decorative waves' });
-    cover.addImage({ path: sparqLogoUrl, x: 4.35, y: 2.36, w: 5.4, h: 1.26, altText: 'SparQ logo' });
+    cover.addImage({ ...imageData(coverWaves), x: 0, y: 0, w: SLIDE_W, h: 7.5, altText: 'Decorative waves' });
+    cover.addImage({ ...imageData(sparqLogo), x: 4.35, y: 2.36, w: 5.4, h: 1.26, altText: 'SparQ logo' });
     cover.addText('X', {
         x: 6.25, y: 3.56, w: 1.1, h: 0.55, margin: 0, isTextBox: true, align: 'center', valign: 'top',
         fontFace: FONT, fontSize: 37, bold: true, color: '000000',
@@ -234,7 +273,7 @@ export const downloadStoryboardDeck = async (
             const ratio = image.width / image.height;
             const w = Math.min(MOOD_BOX.w, MOOD_BOX.h * ratio);
             const h = w / ratio;
-            const source = image.dataUrl.startsWith('data:') ? { data: image.dataUrl.slice(5) } : { path: image.dataUrl };
+            const source = image.dataUrl.startsWith('data:') ? imageData(image.dataUrl) : { path: image.dataUrl };
             moodBoard.addImage({
                 ...source, x: (SLIDE_W - w) / 2, y: MOOD_BOX.y + (MOOD_BOX.h - h) / 2, w, h,
                 altText: `Mood board for concept ${index + 1}`,

@@ -50,7 +50,7 @@ import {
 } from './utils';
 import { urlToUploadedImage, callGemini3 } from './utils/api';
 import { exportStructuredPDF, exportStoryBriefPDF } from './utils/pdfGenerator';
-import { downloadStoryboardDeck, StoryboardConcept } from './utils/storyboardDeck';
+import { downloadStoryboardDeck, preloadStoryboardDeck, StoryboardConcept } from './utils/storyboardDeck';
 import { generateMoodBoard } from './utils/moodBoard';
 import { usePillarOperations } from './hooks/usePillarOperations';
 import { useWorldOperations } from './hooks/useWorldOperations';
@@ -364,6 +364,14 @@ function App() {
   };
 
   // Save state to localStorage whenever it changes
+  // Load the storyboard deck library and images soon after the app opens. A session can run for
+  // hours before the deck is downloaded; by then the dev server may have stopped, or a new Vercel
+  // deploy may have replaced these files, and loading them only at download time would fail.
+  useEffect(() => {
+    const timer = setTimeout(() => { preloadStoryboardDeck().catch(() => { /* retried later */ }); }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('sparq_lang', JSON.stringify(lang));
   }, [lang]);
