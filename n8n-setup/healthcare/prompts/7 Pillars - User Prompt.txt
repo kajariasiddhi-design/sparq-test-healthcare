@@ -21,10 +21,6 @@ Patient – Income: {{ $('Set Healthcare Values').item.json['Patient - Income'] 
 Patient – Geography: {{ $('Set Healthcare Values').item.json['Patient - Geography'] }}
 Who Usually Accompanies the Patient: {{ $('Set Healthcare Values').item.json['Accompanied By'] }}
 
-Healthcare guidance for the pillars:
-- The functional problem is the patient's or family's health need, or the difficulty of getting good care for it (long waits for a diagnosis, uncertainty about whom to trust, travelling to another city for treatment). Frame it as their situation, not as a description of a disease.
-- Life problems must stay dignified: no fear, shame or blame around illness. Focus on worry, uncertainty, disruption to family life and routines, confidence, and peace of mind.
-- If the patients include children (ages 0–7 or 8–15), frame life problems around the parents and family who make the decisions.
 
 Only to be used if all the above fields are missing / undefined:
 Positioning - {{ $('Webhook').item.json.body.form_data.brandDescriptionResponse.positioning }}

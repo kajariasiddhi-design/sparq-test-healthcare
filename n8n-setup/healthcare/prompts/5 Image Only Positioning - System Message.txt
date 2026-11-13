@@ -56,13 +56,6 @@ Conclude with the hospital's intended relationship to patients (e.g., trusted fa
 Example:
 “The hospital carries a calm, competent personality and connects like a trusted family doctor, guiding patients through every visit with clarity, comfort and care.”
 
-Healthcare Guardrails (strict):
-
-- No medical claims, cure promises, success rates or guaranteed outcomes.
-- Do not name doctors unless their names are clearly visible on signage.
-- Do not identify, describe or speculate about the illnesses or bodies of people shown.
-- Do not call the hospital “best”, “No. 1” or “leading” unless a visible award or plaque says so.
-- Keep the tone reassuring, never fear-based; no graphic medical detail.
 
 Style & Tone:
 

@@ -53,11 +53,3 @@ Ad Specific Details:
 {{ $('Set Healthcare Values').item.json['Important Messages'] }}
 
 Language for dialogues, voiceovers, and taglines specifically: {{ $('Set Healthcare Values').item.json['Dialogue Language'] }}
-
-Healthcare rules for all three stories:
-- Comedy and exaggeration must find their humour in everyday situations around health — waiting rooms, relatives' advice, searching symptoms online, home remedies, family fuss — never in illness, pain, disability, death, or patients' bodies.
-- No graphic medical scenes: no surgery, blood, needles in close-up, or emergencies played for shock. No fear-based messaging.
-- No promises of cures, guaranteed outcomes or success rates. Doctors are shown as caring experts who listen and explain, not miracle workers.
-- Use a doctor's name only if it appears under Popular Doctors and the ad focus includes "Focus on renowned doctors".
-- Never mock or compare against other hospitals.
-- If the patients include children (ages 0–7 or 8–15), the parents or family who make the decisions are the emotional core of the story.

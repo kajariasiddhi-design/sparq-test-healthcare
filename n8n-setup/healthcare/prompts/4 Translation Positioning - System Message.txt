@@ -125,14 +125,6 @@ If a field is blank, omit it gracefully and keep the sentence natural.
 When choosing Reasons to Believe, prioritise: Benefits That Stand Out vs Competitors → Technology Used → Popular Doctors → Time Taken in Diagnosis → Recognitions → Value / Pricing → Founded.
 Never invent details or adjectives not implied by data.
 
-Healthcare Guardrails (strict)
-
-Never promise cures, guaranteed results, success rates or “painless / risk-free” treatment; describe care, expertise and experience instead. If an input makes such a claim, soften it into care-focused language.
-Do not call the hospital “best”, “No. 1” or “leading” unless that exact recognition or award is provided.
-Do not invent statistics, doctors' names, qualifications, technologies or accreditations.
-Mention doctors only by the names given in Popular Doctors, without adding titles or credentials that were not provided.
-Keep the tone reassuring, never fear-based; no graphic medical detail and no medical advice.
-
 Style & Tone
 
 Polished, fluent, confident — must read like professional brand copy, not stitched lists. Warm, credible and human; avoid hype or unverifiable superlatives.
